@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -52,11 +51,12 @@ int init_project(char* directory) {
         directory[path_length - 1] = '\0';
         path_length--;
     }
-    char* current_filename = malloc((path_length + 12) * sizeof(char));  // 12 == strlen("/.gitignore") + 1
+
+    char current_filename[4096];
 
     // cpk.toml: Error if already exists
-    strcpy(current_filename, directory);
-    strcat(current_filename, "/cpk.toml");
+    snprintf(current_filename, 4096, "%s/cpk.toml", directory);
+
     FILE* fp_cpk_toml = fopen(current_filename, "wx");
     if (!fp_cpk_toml) {
         fprintf(stderr, "Error: %s could not be created: ", current_filename);
@@ -118,7 +118,6 @@ int init_project(char* directory) {
     fprintf(fp_gitignore, "%s", INIT_DEFAULT_GITIGNORE);
     fclose(fp_gitignore);
 
-    free(current_filename);
     if (src_exists) {
         printf("Project initialised. Start by editing %s/cpk.toml configuration to fit your project.\n", directory);
     } else {

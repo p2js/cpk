@@ -23,17 +23,18 @@ int main(int argc, char* argv[]) {
     }
     // The next options all require parsing configuration
     toml_result_t config = parse_config();
+    int exit_code = 0;
 
     if (!strcmp("compile", argv[1])) {
         char* target = argc >= 3 ? argv[2] : "dev";
-        compile_target(target, config);
+        exit_code = compile_target(target, config);
     } else if (!strcmp("run", argv[1])) {
         char* target = argc >= 3 ? argv[2] : "dev";
-        compile_target(target, config);
-        run_target(target, config);
+        exit_code = compile_target(target, config);
+        if (!exit_code) exit_code = run_target(target, config);
     }
 
     free_config(config);
 
-    return 0;
+    return exit_code;
 }

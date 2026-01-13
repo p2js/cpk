@@ -9,18 +9,15 @@
 
 int compile_target(char* target, toml_result_t config) {
     // Check that the config defines the given target
-    size_t target_len = strlen(target);
-    char* target_table = calloc(target_len + 9, sizeof(char));  // 9 == strlen("targets.") + 1
-    strcpy(target_table, "targets.");
-    strcat(target_table, target);
 
-    toml_datum_t toml_target = toml_seek(config.toptab, target_table);
+    char target_table_name[4096];
+    snprintf(target_table_name, 4096, "targets.%s", target);
+
+    toml_datum_t toml_target = toml_seek(config.toptab, target_table_name);
     if (toml_target.type != TOML_TABLE) {
-        fprintf(stderr, "Error: cpk.toml: target %s is not defined\n", target_table);
-        free(target_table);
+        fprintf(stderr, "Error: cpk.toml: target %s is not defined\n", target_table_name);
         return 1;
     }
-    free(target_table);
 
     // Grab the target dir name
     toml_datum_t toml_target_dir = toml_get(config.toptab, "target_dir");
@@ -39,7 +36,8 @@ int compile_target(char* target, toml_result_t config) {
         return 1;
     }
 
-    char* dirpath = calloc(target_dir_len + target_len + 2, sizeof(char));
+    char dirpath[4096];
+
     strcpy(dirpath, target_dir);
     dirpath[target_dir_len] = '/';
     strcpy(dirpath + target_dir_len + 1, target);
@@ -49,7 +47,6 @@ int compile_target(char* target, toml_result_t config) {
     if (mkdir_result && errno != EEXIST) {
         fprintf(stderr, "Could not create target directory %s: ", dirpath);
         perror("");
-        free(dirpath);
         return 1;
     }
 
@@ -57,7 +54,6 @@ int compile_target(char* target, toml_result_t config) {
     toml_datum_t toml_target_build = toml_get(toml_target, "build");
     if (toml_target_build.type != TOML_STRING) {
         fprintf(stderr, "Error: cpk.toml: target %s does not provide a build command string", target);
-        free(dirpath);
         return 1;
     }
 
@@ -69,25 +65,20 @@ int compile_target(char* target, toml_result_t config) {
     if (build_result != 0) {
         fprintf(stderr, "Error: build command returned non-zero exit code\n");
         snapshot_free(&before);
-        free(dirpath);
         return 1;
     }
-
     // Capture and diff directory after build, move any new files to target
     dir_snapshot after = snapshot_directory(".");
     dir_snapshot diff = diff_snapshots(&before, &after);
-
     if (!diff.count) {
         fprintf(stderr, "Warning: build command did not produce any output files\n");
     }
-
     move_snapshot_diff_items(&diff, ".", dirpath);
 
     snapshot_free(&before);
     snapshot_free(&after);
     snapshot_free(&diff);
 
-    free(dirpath);
     return 0;
 }
 
