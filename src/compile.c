@@ -1,11 +1,16 @@
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
+#include "dir/snapshot.h"
 #include "tomlc17/tomlc17.h"
 
 int compile_target(char* target, toml_result_t config) {
     // Check that the config defines the given target
-    char* target_table = malloc((strlen(target) + 9) * sizeof(char));  // 8 == strlen("targets.") + 1
+    size_t target_len = strlen(target);
+    char* target_table = calloc(target_len + 9, sizeof(char));  // 9 == strlen("targets.") + 1
     strcpy(target_table, "targets.");
     strcat(target_table, target);
 
@@ -26,9 +31,67 @@ int compile_target(char* target, toml_result_t config) {
     const char* target_dir = toml_target_dir.u.str.ptr;
     int target_dir_len = toml_target_dir.u.str.len;
 
+    // Make the build and target directories if it doesn't already exist
+    int mkdir_result = mkdir(target_dir, 0700);
+    if (mkdir_result && errno != EEXIST) {
+        fprintf(stderr, "Could not create targets directory %s: ", target_dir);
+        perror("");
+        return 1;
+    }
+
+    char* dirpath = calloc(target_dir_len + target_len + 2, sizeof(char));
+    strcpy(dirpath, target_dir);
+    dirpath[target_dir_len] = '/';
+    strcpy(dirpath + target_dir_len + 1, target);
+
+    mkdir_result = mkdir(dirpath, 0700);
+
+    if (mkdir_result && errno != EEXIST) {
+        fprintf(stderr, "Could not create target directory %s: ", dirpath);
+        perror("");
+        free(dirpath);
+        return 1;
+    }
+
+    // Compile code using the build script
+    toml_datum_t toml_target_build = toml_get(toml_target, "build");
+    if (toml_target_build.type != TOML_STRING) {
+        fprintf(stderr, "Error: cpk.toml: target %s does not provide a build command string", target);
+        free(dirpath);
+        return 1;
+    }
+
+    // Capture project directory before build command
+    dir_snapshot before = snapshot_directory(".");
+
+    // Run build command
+    int build_result = system(toml_target_build.u.str.ptr);
+    if (build_result != 0) {
+        fprintf(stderr, "Error: build command returned non-zero exit code\n");
+        snapshot_free(&before);
+        free(dirpath);
+        return 1;
+    }
+
+    // Capture and diff directory after build, move any new files to target
+    dir_snapshot after = snapshot_directory(".");
+    dir_snapshot diff = diff_snapshots(&before, &after);
+
+    if (!diff.count) {
+        fprintf(stderr, "Warning: build command did not produce any output files\n");
+    }
+
+    move_snapshot_diff_items(&diff, ".", dirpath);
+
+    snapshot_free(&before);
+    snapshot_free(&after);
+    snapshot_free(&diff);
+
+    free(dirpath);
     return 0;
 }
 
 int run_target(char* target, toml_result_t config) {
+    // This runs after compile_target, so we are guaranteed that target_dir/target/ exists
     return 0;
 }

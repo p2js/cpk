@@ -2,11 +2,11 @@
 
 #include "compile.c"
 #include "config.c"
+#include "dir/snapshot.c"
 #include "help.c"
 #include "init.c"
 #include "tomlc17/tomlc17.c"
 #include "tomlc17/tomlc17.h"
-
 
 int main(int argc, char* argv[]) {
     if (argc == 1 || !strcmp("help", argv[1])) {
@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
         compile_target(target, config);
         run_target(target, config);
     }
+
     free_config(config);
 
     return 0;
