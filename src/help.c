@@ -18,20 +18,22 @@ Commands for new projects:\n\
 \tcpk help\t\tShow the help menu\n\
 \tcpk ex\t\t\tShow a comprehensive example for cpk.toml\n\
 Commands for compilation:\n\
-\tcpk compile [target]\trun the compilation command for the target to its output folder (target/[target])\n\
+\tcpk compile [target]\trun the compilation command for the target to its output folder (target/[target]) (*)\n\
 \tcpk run [target]\tcpk compile [target], then run the executable\n\
 Commands for dependency management:\n\
 \tcpk install\t\tInstall all the dependencies specified in cpk.toml\n\
 \tcpk add (name=dep)+\tAdd one or more dependencies to cpk.toml and install them\n\
 Dependency types:\n\
-\tgh:(repo)\t\tGitHub repository\n\
-\tgit:(URL)\t\tGit repository at URL\n\
-\t(URL)\t\t\tSingle source file or directory of source files";
+\tgh:(repo)\t\tGitHub repository     (requires git command)\n\
+\tgit:(URL)\t\tGit repository at URL (requires git command)\n\
+\t(URL)\t\t\tSingle source file or directory of source files\n\
+\n\
+(*) Note the build command must not write files outside of the project directory in order to get moved to the output folder.";
 
 const char* TOML_EXAMPLE =
     "Example cpk.toml:\n\
 \n\
-target_dir = \"build\" # Directory for all targets' builds, default: \"build\"\n\
+target_dir = \"build\" # Directory for all targets' builds\n\
 \n\
 [dependencies] # dependencies map names to repositories/files\n\
 CLArgs = \"gh:p2js/clargs\"\n\

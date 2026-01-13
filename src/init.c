@@ -6,17 +6,15 @@
 #include <string.h>
 #include <sys/stat.h>
 
-typedef size_t usize;
-
 const char* INIT_DEFAULT_GITIGNORE = "\n#cpk output directory\nbuild\n";
 const char* INIT_DEFAULT_MAIN =
     "#include <stdio.h>\n\
 \n\
 int main(void) {\n\
-    printf(\"Hello World!\");\n\
+    printf(\"Hello World!\\n\");\n\
 }\n";
 const char* INIT_DEFAULT_TOML =
-    "target_dir = \"build\" # Directory for all targets' builds, default: \"build\"\n\
+    "target_dir = \"build\" # Directory for all targets' builds\n\
 \n\
 [dependencies] # dependencies map names to repositories/files\n\
 \n\
@@ -49,7 +47,7 @@ int init_project(char* directory) {
         printf("Initialising new project in %s\n", directory);
     }
 
-    usize path_length = strlen(directory);
+    size_t path_length = strlen(directory);
     if (directory[path_length - 1] == '/') {
         directory[path_length - 1] = '\0';
         path_length--;

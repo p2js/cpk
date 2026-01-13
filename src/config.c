@@ -12,9 +12,10 @@ toml_result_t parse_config() {
     toml_result_t config = toml_parse_file(toml_cpk_fp);
     if (!config.ok) {
         fprintf(stderr, "Error parsing cpk.toml: %s\n", config.errmsg);
+        fclose(toml_cpk_fp);
         exit(1);
     }
-
+    fclose(toml_cpk_fp);
     return config;
 }
 
