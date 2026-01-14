@@ -1,6 +1,6 @@
 # cpk
 
-WIP Simple dependency manager and project runner for C.
+WIP Simple dependency manager, build system and project runner for C, designed around unity builds.
 Requires git.
 
 ## Usage
