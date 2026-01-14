@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-const char* INIT_DEFAULT_GITIGNORE = "\n#cpk output directory\nbuild\n";
+const char* INIT_DEFAULT_GITIGNORE = "\n#cpk output directory\nbuild\n#cpk dependency symlinks\n.cpk\n";
 const char* INIT_DEFAULT_MAIN =
     "#include <stdio.h>\n\
 \n\

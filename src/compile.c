@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "dir/snapshot.h"
 #include "tomlc17/tomlc17.h"
@@ -56,16 +57,18 @@ int compile_target(char* target, toml_result_t config) {
         fprintf(stderr, "Error: cpk.toml: target %s does not provide a build command string", target);
         return 1;
     }
+    const char* build_command = toml_target_build.u.str.ptr;
 
     // Capture project directory before build command
     dir_snapshot before = snapshot_directory(".");
 
     // Run build command
-    int build_result = system(toml_target_build.u.str.ptr);
+    printf("> %s\n", build_command);
+    int build_result = system(build_command);
     if (build_result != 0) {
         fprintf(stderr, "Error: build command returned non-zero exit code\n");
         snapshot_free(&before);
-        return 1;
+        return build_result;
     }
     // Capture and diff directory after build, move any new files to target
     dir_snapshot after = snapshot_directory(".");
@@ -82,7 +85,29 @@ int compile_target(char* target, toml_result_t config) {
     return 0;
 }
 
-int run_target(char* target, toml_result_t config) {
+int run_target(char* target, toml_result_t config, char* argv[]) {
     // This runs after compile_target, so we are guaranteed that target_dir/target/ exists
-    return 0;
+    // and that both are validly defined in the toml
+    char executable_path[4096];
+    snprintf(executable_path, 4096, "targets.%s.ex", target);
+
+    toml_datum_t target_ex = toml_seek(config.toptab, executable_path);
+    if (target_ex.type != TOML_STRING) {
+        printf("Error: cpk.toml: target %s does not provide an executable name\n", target);
+        return 1;
+    }
+    const char* executable_name = target_ex.u.str.ptr;
+    const char* target_dir = toml_get(config.toptab, "target_dir").u.str.ptr;
+
+    snprintf(executable_path, 4096, "%s/%s/%s", target_dir, target, executable_name);
+
+    printf("> %s", executable_path);
+
+    for (size_t i = 0; argv[i] != NULL; i++) {
+        printf(" %s", argv[i]);
+    }
+    putchar('\n');
+
+    int exit_code = execv(executable_path, argv);
+    return exit_code;
 }
