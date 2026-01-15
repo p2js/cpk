@@ -17,19 +17,21 @@ Commands for new projects:\n\
 \tcpk init [directory]\tInitialise a cpk project in [directory], or the current one if not specified\n\
 \tcpk help\t\tShow the help menu\n\
 \tcpk ex\t\t\tShow a comprehensive example for cpk.toml\n\
-Commands for compilation:\n\
+Commands for project compilation:\n\
 \tcpk compile [target]\trun the compilation command for the target to its output folder (*)\n\
 \tcpk run [target]\tcpk compile [target], then run the executable\n\
-Commands for dependency management:\n\
+Commands for project dependency management:\n\
 \tcpk install\t\tInstall all the dependencies specified in cpk.toml\n\
 \tcpk add (name=dep)+\tAdd one or more dependencies to cpk.toml and install them\n\
-\tcpk update (dep)+\tUpdate/reinstall a dependency in the global store\n\
+\tcpk remove (name)+\tRemove one or more dependencies from cpk.toml\n\
+\tcpk relink\t\tRebuild symlinks for all dependencies\n\
+Commands for dependency store management:\n\
+\tcpk reinstall (dep)+\tUpdate/reinstall one or more dependencies in the global store\n\
+\tcpk delete (dep)\tRemove a dependency from the global store\n\
 Dependency types:\n\
-\tgh:(repo)\t\tGitHub repository     (requires git command)\n\
-\tgit:(URL)\t\tGit repository at URL (requires git command)\n\
-\t(URL)\t\t\tSingle source file or directory of source files\n\
-\n\
-(*) Note the build command must not generate files outside of the project directory in order to get moved to the output folder.";
+\tgh:(repo)[>path]\tGitHub repository, optionally checking out path     (requires git command)\n\
+\tgit:(URL)[>path]\tGit repository at URL, optionally checking out path (requires git command)\n\
+\t(URL)\t\t\tSingle source file, ZIP or tarball available at URL";
 
 const char* TOML_EXAMPLE =
     "Example cpk.toml:\n\
@@ -41,7 +43,7 @@ CLArgs = \"gh:p2js/clargs\"\n\
 \n\
 [targets]\n\
 # targets map target names to build commands (for use with cpk run/compile)\n\
-# all files produced by the build command will be output to target_dir/target_name\n\
+# all files produced by the build command in the project folder will be output to target_dir/target_name\n\
 \n\
 # dev is the default profile (will be used by run/compile when a target is not provided)\n\
 dev = {\n\
