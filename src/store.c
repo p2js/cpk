@@ -24,10 +24,9 @@ const char* GITHUB_URL = "https://github.com/";
 
 typedef struct {
     /**
-     * Hash string (folder name in store).
-     * 32 is the number of characters needed to represent a 128-bit hash as hex.
+     * Path of the dependency's store folder.
      */
-    char hash_string[33];
+    char path[4096];
     /**
      * Source URL.
      * 2000 is the generally agreed-upon convention for a maximum URL length (rounds up to 2048).
@@ -45,11 +44,29 @@ typedef struct {
     char git_path[256];
 } store_dependency_identifier;
 
+static char store_dir[4096];
+
+/**
+ * Checks where dependencies should be stored and whether the store is accessible,
+ * creating the directory if necessary and setting the directory variable.
+ */
+void store_init() {
+    char* xdg_cache_home = getenv("XDG_CACHE_HOME");
+    snprintf(store_dir, 4096, "%s/cpk/", xdg_cache_home != NULL ? xdg_cache_home : "~/.cache");
+
+    int mkdir_result = mkdir(store_dir, 0700);
+
+    if (mkdir_result && mkdir_result != EEXIST) {
+        perror("FATAL: cpk store directory could not be created");
+        exit(1);
+    }
+}
+
 store_dependency_identifier store_resolve_identifier(char* ident_string) {
     store_dependency_identifier ident = {0};
 
     XXH128_hash_t ident_string_hash = XXH3_128bits(ident_string, strlen(ident_string));
-    sprintf(ident.hash_string, "%016lx%016lx", ident_string_hash.high64, ident_string_hash.low64);
+    sprintf(ident.path, "%s%016lx%016lx", store_dir, ident_string_hash.high64, ident_string_hash.low64);
 
     if (!strncmp("gh:", ident_string, 3)) {
         ident.git = true;
@@ -88,45 +105,22 @@ store_dependency_identifier store_resolve_identifier(char* ident_string) {
     return ident;
 };
 
-/**
- * Checks where dependencies should be stored and whether the store is accessible,
- * creating the directory if necessary and returning the path.
- */
-char* store_init() {
-    static char store_dir[4096];
-
-    char* xdg_cache_home = getenv("XDG_CACHE_HOME");
-    snprintf(store_dir, 4096, "%s/cpk/", xdg_cache_home != NULL ? xdg_cache_home : "~/.cache");
-
-    int mkdir_result = mkdir(store_dir, 0700);
-
-    if (mkdir_result && mkdir_result != EEXIST) {
-        perror("FATAL: cpk store directory could not be created");
-        exit(1);
-    }
-
-    return store_dir;
-}
-
-int store_get_dependency(store_dependency_identifier dependency, char* store_directory) {
+int store_get_dependency(store_dependency_identifier dependency) {
     if (!dependency.git) {
         printf("Downloading non-git dependencies is currently unimplemented\n");
         return 1;
     }
     char cwd[4096];  // TODO: Move this outside to general commands to
     getcwd(cwd, 4096);
-    char dependency_dir[4096];
-    strcpy(dependency_dir, store_directory);
-    strcat(dependency_dir, dependency.hash_string);
 
-    int mkdir_result = mkdir(dependency_dir, 0700);
+    int mkdir_result = mkdir(dependency.path, 0700);
     if (mkdir_result && mkdir_result != EEXIST) {
         printf("Error creating dependency directory for %s: ", dependency.URL);
         perror("");
         return 1;
     }
 
-    chdir(dependency_dir);
+    chdir(dependency.path);
 
     if (dependency.git) {
         char git_clone_command[2048 + 10] = "git clone ";
@@ -154,23 +148,22 @@ int store_get_dependency(store_dependency_identifier dependency, char* store_dir
     return 0;
 }
 
-int store_remove_dependency(store_dependency_identifier dependency, char* store_directory) {
-    char dependency_dir[4096];
-    strcpy(dependency_dir, store_directory);
-    strcat(dependency_dir, dependency.hash_string);
-    int rmdir_result = rmdir(dependency_dir);
+int store_remove_dependency(store_dependency_identifier dependency) {
+    int rmdir_result = rmdir(dependency.path);
     if (rmdir_result) {
         perror("Error removing dependency from global store");
     }
     return rmdir_result;
 }
 
-int store_update_dependency(store_dependency_identifier dependency, char* store_directory) {
+int store_update_dependency(store_dependency_identifier dependency) {
     if (!dependency.git) {
-        store_remove_dependency(dependency, store_directory);
-        return store_get_dependency(dependency, store_directory);
+        printf("Dependency is not a git repository, reinstalling manually\n");
+        store_remove_dependency(dependency);
+        return store_get_dependency(dependency);
     }
     // TODO: use git pull
+    return 0;
 }
 
-int store_create_symlink(store_dependency_identifier dependency, char* store_directory);
+int store_create_symlink(store_dependency_identifier dependency);

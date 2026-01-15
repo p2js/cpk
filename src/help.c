@@ -26,7 +26,7 @@ Commands for project dependency management:\n\
 \tcpk remove (name)+\tRemove one or more dependencies from cpk.toml\n\
 \tcpk relink\t\tRebuild symlinks for all dependencies\n\
 Commands for dependency store management:\n\
-\tcpk reinstall (dep)+\tUpdate/reinstall one or more dependencies in the global store\n\
+\tcpk update (dep)\tUpdate/reinstall a dependency in the global store\n\
 \tcpk delete (dep)\tRemove a dependency from the global store\n\
 Dependency types:\n\
 \tgh:(repo)[>path]\tGitHub repository, optionally checking out path     (requires git command)\n\
