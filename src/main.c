@@ -5,8 +5,12 @@
 #include "dir/snapshot.c"
 #include "help.c"
 #include "init.c"
+#include "store.c"
 #include "tomlc17/tomlc17.c"
 #include "tomlc17/tomlc17.h"
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash/xxhash.h"
 
 int main(int argc, char* argv[]) {
     if (argc == 1 || !strcmp("help", argv[1])) {
@@ -21,6 +25,7 @@ int main(int argc, char* argv[]) {
         char* init_dir = argc >= 3 ? argv[2] : ".";
         return init_project(init_dir);
     }
+
     // The next options all require parsing configuration
     toml_result_t config = parse_config();
     int exit_code = 0;
@@ -29,7 +34,8 @@ int main(int argc, char* argv[]) {
         char* target = argc >= 3 ? argv[2] : "dev";
         printf("Compiling target %s\n", target);
         exit_code = compile_target(target, config);
-    } else if (!strcmp("run", argv[1])) {
+    }
+    if (!strcmp("run", argv[1])) {
         char* target = "dev";
         char** run_argv = &argv[argc];
 
@@ -45,6 +51,5 @@ int main(int argc, char* argv[]) {
     }
 
     free_config(config);
-
     return exit_code;
 }
