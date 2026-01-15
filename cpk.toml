@@ -1,0 +1,8 @@
+target_dir = "build"
+
+[targets]
+
+dev = {
+    build = "clang src/main.c -o cpk",
+    ex = "cpk"
+}
