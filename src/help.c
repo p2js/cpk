@@ -29,8 +29,8 @@ Commands for dependency store management:\n\
 \tcpk update (dep)\tUpdate/reinstall a dependency in the global store\n\
 \tcpk delete (dep)\tRemove a dependency from the global store\n\
 Dependency types:\n\
-\tgh:(repo)[>path]\tGitHub repository, optionally checking out path     (requires git command)\n\
-\tgit:(URL)[>path]\tGit repository at URL, optionally checking out path (requires git command)\n\
+\tgh:(repo)[-path]\tGitHub repository, optionally checking out path     (requires git command)\n\
+\tgit:(URL)[-path]\tGit repository at URL, optionally checking out path (requires git command)\n\
 \t(URL)\t\t\tSingle source file, ZIP or tarball available at URL";
 
 const char* TOML_EXAMPLE =

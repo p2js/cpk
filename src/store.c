@@ -75,7 +75,7 @@ store_dependency_identifier store_resolve_identifier(char* ident_string) {
         size_t a = strlen(ident_string);
         int i;
         for (i = 3; i < a; i++) {
-            if (ident_string[i] == '>') {
+            if (ident_string[i] == '-') {
                 strcpy(ident.git_path, ident_string + i + 1);
                 break;
             }
@@ -89,14 +89,14 @@ store_dependency_identifier store_resolve_identifier(char* ident_string) {
         size_t a = strlen(ident_string);
         int i;
         for (i = 2; i < a; i++) {
-            if (ident_string[i] == '>') {
+            if (ident_string[i] == '-') {
                 strcpy(ident.git_path, ident_string + i + 1);
                 break;
             }
         }
         ident_string[i] = 0;
         // Copy the remaining URL
-        strcat(ident.URL, ident_string + 4);
+        strcpy(ident.URL, ident_string + 4);
     } else {
         // Simple URL
         strcpy(ident.URL, ident_string);
