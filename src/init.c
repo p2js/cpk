@@ -68,8 +68,7 @@ int init_project(char* directory) {
 
     // build dir: Just create
     strcpy(current_filename + path_length, "/build");
-    int mkdir_result = mkdir(current_filename, 0700);
-    if (mkdir_result) {
+    if (mkdir(current_filename, 0700)) {
         if (errno == EEXIST) {
             printf("[WARN] %1$s/build file or directory already exists.\n[WARN] If this is not intended to be the destination for your project's output targets, change %1$s/cpk.toml and %1$s/.gitignore accordingly.\n",
                 directory);
@@ -83,8 +82,7 @@ int init_project(char* directory) {
     bool src_exists = false;
 
     strcpy(current_filename + path_length, "/src");
-    mkdir_result = mkdir(current_filename, 0700);
-    if (mkdir_result) {
+    if (mkdir(current_filename, 0700)) {
         if (errno == EEXIST) {
             src_exists = true;
             printf("[INFO] %s file or directory already exists, example main.c will not be created\n", current_filename);

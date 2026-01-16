@@ -30,8 +30,7 @@ int compile_target(char* target, toml_result_t config) {
     int target_dir_len = toml_target_dir.u.str.len;
 
     // Make the build and target directories if it doesn't already exist
-    int mkdir_result = mkdir(target_dir, 0700);
-    if (mkdir_result && errno != EEXIST) {
+    if (mkdir(target_dir, 0700) && errno != EEXIST) {
         fprintf(stderr, "Could not create targets directory %s: ", target_dir);
         perror("");
         return 1;
@@ -43,9 +42,7 @@ int compile_target(char* target, toml_result_t config) {
     dirpath[target_dir_len] = '/';
     strcpy(dirpath + target_dir_len + 1, target);
 
-    mkdir_result = mkdir(dirpath, 0700);
-
-    if (mkdir_result && errno != EEXIST) {
+    if (mkdir(dirpath, 0700) && errno != EEXIST) {
         fprintf(stderr, "Could not create target directory %s: ", dirpath);
         perror("");
         return 1;
@@ -65,7 +62,7 @@ int compile_target(char* target, toml_result_t config) {
     // Run build command
     printf("> %s\n", build_command);
     int build_result = system(build_command);
-    if (build_result != 0) {
+    if (build_result) {
         fprintf(stderr, "Error: build command returned non-zero exit code\n");
         snapshot_free(&before);
         return build_result;
