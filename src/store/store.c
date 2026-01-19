@@ -11,8 +11,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
 #include "xxHash/xxhash.h"
 
 const char* GITHUB_URL = "https://github.com/";
@@ -85,7 +83,6 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         // Local file on disk
         ident.mode = DEPENDENCY_FILE;
         strcpy(ident.path, ident_string + 5);
-        printf(".path = %s\n", ident.path);
     } else {
         ident.mode = DEPENDENCY_WEB;
         // Simple URL
@@ -151,6 +148,7 @@ int store_remove_dependency(store_dependency_identifier dependency) {
 int store_update_dependency(store_dependency_identifier dependency) {
     switch (dependency.mode) {
         case DEPENDENCY_FILE:
+            printf("Dependency is local and therefore cannot be updated\n");
             return 0;
         case DEPENDENCY_WEB:
             printf("Dependency is not a git repository, reinstalling manually\n");
@@ -163,12 +161,6 @@ int store_update_dependency(store_dependency_identifier dependency) {
 }
 
 int store_create_symlink(store_dependency_identifier dependency, const char* local_name) {
-    // // Create .cpk folder if it doesn't already exist
-    // if (mkdir(".cpk", 0700) && errno != EEXIST) {
-    //     perror("Could not create .cpk dependency directory");
-    //     return 1;
-    // }
-
     char local_dependency_path[4096];
     strcpy(local_dependency_path, ".cpk/");
     strcat(local_dependency_path, local_name);

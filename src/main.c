@@ -1,14 +1,19 @@
 #include <string.h>
 
-#include "add.c"
 #include "compile.c"
-#include "config.c"
+#include "dependency.c"
 #include "dir/snapshot.c"
 #include "help.c"
 #include "init.c"
 #include "store/store.c"
+#include "toml/config.c"
+// Dependencies
 #include "tomlc17/src/tomlc17.c"
 #include "tomlc17/src/tomlc17.h"
+
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxHash/xxhash.h"
 
 int main(int argc, char* argv[]) {
     if (argc == 1 || !strcmp("help", argv[1])) {
@@ -25,7 +30,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (!strcmp("remove", argv[1])) {
-        if(argc < 3) {
+        if (argc < 3) {
             printf("Please provide a dependency identifier to remove from the global store.\n");
             return 1;
         }
@@ -35,8 +40,8 @@ int main(int argc, char* argv[]) {
     }
 
     // The next options all require parsing configuration
-    toml_result_t config = parse_config();
-    int exit_code = 0;
+    toml_result_t config = config_parse();
+    int exit_code = -1;
 
     if (!strcmp("compile", argv[1])) {
         char* target = argc >= 3 ? argv[2] : "dev";
@@ -61,7 +66,15 @@ int main(int argc, char* argv[]) {
         store_init();
         exit_code = install_dependencies(config);
     }
+    if (!strcmp("add", argv[1])) {
+        store_init();
+        exit_code = add_dependencies(argv + 2, config);
+    }
 
-    free_config(config);
+    if (exit_code == -1) {
+        printf("Unknown command '%s'\nTo view a list of commands, use 'cpk help'\n", argv[1]);
+    }
+
+    config_free(config);
     return exit_code;
 }
