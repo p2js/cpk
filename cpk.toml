@@ -8,6 +8,6 @@ tomlc17 = "gh:cktan/tomlc17"
 [targets]
 
 dev = {
-    build = "clang $CFLAGS src/main.c -o cpk",
+    build = "clang -I.cpk src/main.c -o cpk",
     ex = "cpk"
 }

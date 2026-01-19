@@ -122,7 +122,7 @@ int init_project(char* directory) {
     strcpy(current_filename + path_length, "/.cpk");
     if(mkdir(current_filename, 0700)) {
         if(errno == EEXIST) {
-            printf("Info: %s already exists, you may want to run cpk relink", current_filename);
+            printf("Info: %s already exists, you may want to rerun cpk install", current_filename);
         }
         fprintf(stderr, "Error: %s could not be created: ", current_filename);
         perror("");

@@ -9,9 +9,6 @@
 #include "store/store.c"
 #include "tomlc17/src/tomlc17.c"
 #include "tomlc17/src/tomlc17.h"
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#include "xxHash/xxhash.h"
 
 int main(int argc, char* argv[]) {
     if (argc == 1 || !strcmp("help", argv[1])) {
