@@ -8,6 +8,11 @@ tomlc17 = "gh:cktan/tomlc17"
 [targets]
 
 dev = {
-    build = "clang -I.cpk src/main.c -o cpk",
+    build = "clang src/main.c -I.cpk -o cpk",
+    ex = "cpk"
+}
+
+release = {
+    build = "clang src/main.c -O3 -I.cpk -o cpk",
     ex = "cpk"
 }
