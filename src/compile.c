@@ -17,36 +17,42 @@ int compile_target(char* target, toml_result_t config) {
 
     toml_datum_t toml_target = toml_seek(config.toptab, target_table_name);
     if (toml_target.type != TOML_TABLE) {
-        fprintf(stderr, "Error: cpk.toml: target %s is not defined\n", target_table_name);
+        fprintf(stderr, "Error: cpk.toml: target %s is not defined\n", target);
         return 1;
     }
 
-    // Grab the target dir name
+    // Grab the target dir name, use current dire
     toml_datum_t toml_target_dir = toml_get(config.toptab, "target_dir");
     if (toml_target_dir.type != TOML_STRING) {
-        fprintf(stderr, "Error: cpk.toml: target_dir is not a valid string\n");
-        return 1;
+        fprintf(stderr, "Info: cpk.toml: target_dir not defined, using current directory\n");
     }
-    const char* target_dir = toml_target_dir.u.str.ptr;
-    int target_dir_len = toml_target_dir.u.str.len;
-
-    // Make the build and target directories if it doesn't already exist
-    if (mkdir(target_dir, 0700) && errno != EEXIST) {
-        fprintf(stderr, "Could not create targets directory %s: ", target_dir);
-        perror("");
-        return 1;
-    }
+    const char* target_dir = toml_target_dir.type == TOML_STRING 
+        ? toml_target_dir.u.str.ptr
+        : NULL;
+    int target_dir_len = toml_target_dir.type == TOML_STRING ? toml_target_dir.u.str.len : 0;
 
     char dirpath[4096];
+    bool move = true;
 
-    strcpy(dirpath, target_dir);
-    dirpath[target_dir_len] = '/';
-    strcpy(dirpath + target_dir_len + 1, target);
-
-    if (mkdir(dirpath, 0700) && errno != EEXIST) {
-        fprintf(stderr, "Could not create target directory %s: ", dirpath);
-        perror("");
-        return 1;
+    if(target_dir) {
+        // Make the build and target directories if they don't already exist
+        if (mkdir(target_dir, 0700) && errno != EEXIST) {
+            fprintf(stderr, "Error: Could not create targets directory %s: ", target_dir);
+            perror("");
+            return 1;
+        }
+        strcpy(dirpath, target_dir);
+        dirpath[target_dir_len] = '/';
+        strcpy(dirpath + target_dir_len + 1, target);
+        if (mkdir(dirpath, 0700) && errno != EEXIST) {
+            fprintf(stderr, "Could not create target directory %s: ", dirpath);
+            perror("");
+            return 1;
+        }
+    } else {
+        move = false;
+        dirpath[0] = '.';
+        dirpath[1] = 0;
     }
 
     // Compile code using the build script
@@ -80,7 +86,8 @@ int compile_target(char* target, toml_result_t config) {
     // Capture and diff directory after build, move any new files to target
     dir_snapshot after = snapshot_directory(".");
     dir_snapshot diff = diff_snapshots(&before, &after);
-    if (!diff.count) {
+
+    if (!diff.count && toml_target_dir.type == TOML_STRING) {
         fprintf(stderr, "Warning: build command did not produce any output files\n");
     }
     move_snapshot_diff_items(&diff, ".", dirpath);
@@ -108,10 +115,17 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
         return 1;
     }
     const char* executable_name = target_ex.u.str.ptr;
-    const char* target_dir = toml_get(config.toptab, "target_dir").u.str.ptr;
-
-    snprintf(executable_path, 4096, "%s/%s/%s", target_dir, target, executable_name);
-
+    toml_datum_t toml_target_dir = toml_get(config.toptab, "target_dir");
+    if(toml_target_dir.type == TOML_STRING) {
+        snprintf(executable_path, 4096, 
+            "%s/%s/%s", 
+            toml_target_dir.u.str.ptr, 
+            target, 
+            executable_name);
+    } else {
+        strcpy(executable_path, executable_name);
+    }
+    
     printf("> %s", executable_path);
 
     for (size_t i = 0; argv[i] != NULL; i++) {
