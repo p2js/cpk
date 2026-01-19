@@ -13,7 +13,7 @@ int main(void) {\n\
     printf(\"Hello World!\\n\");\n\
 }\n";
 
-const char* TOML_EXAMPLE_2 =
+const char* INIT_DEFAULT_TOML =
     "target_dir = \"build\" # Directory for all targets' builds\n\
 \n\
 [dependencies] # dependencies map names to repositories/files\n\
@@ -26,26 +26,9 @@ const char* TOML_EXAMPLE_2 =
 \n\
 # dev is the default profile (will be used by run/compile when a target arg is not provided)\n\
 dev = {\n\
-  build = \"clang $CFLAGS src/main.c src/debug.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
-  ex = \"a.out\" # Executable path to be used by cpk run (in target dir), default: \"a.out\"\n\
+  build = \"clang $CFLAGS src/main.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
+  ex = \"a.out\" # Executable path to be used by cpk run (in target dir)\n\
 }";
-
-const char* INIT_DEFAULT_TOML =
-    "target_dir = \"build\" # Directory for all targets' builds\n\
-\n\
-[dependencies] # dependencies map names to repositories/files\n\
-\n\
-# Add your own here, manually or via cpk add...\n\
-\n\
-[targets]\n\
-# targets map target names to build commands (for use with cpk run/compile)\n\
-# all files produced by the build command will be output to target_dir/target_name\n\
-\n\
-# dev is the default profile (will be used by run/compile when a target is not provided)\n\
-dev = {\n\
-  build = \"clang src/main.c\", # Build command\n\
-  ex = \"a.out\" # Executable path to be used by cpk run (in target dir), default: \"a.out\"\n\
-}\n";
 
 /**
  * Initialises a cpk project in the given directory name.
@@ -89,7 +72,7 @@ int init_project(char* directory) {
     strcpy(current_filename + path_length, "/build");
     if (mkdir(current_filename, 0700)) {
         if (errno == EEXIST) {
-            printf("[WARN] %1$s/build file or directory already exists.\n[WARN] If this is not intended to be the destination for your project's output targets, change %1$s/cpk.toml and %1$s/.gitignore accordingly.\n",
+            printf("Warning: %1$s/build file or directory already exists.\n[WARN] If this is not intended to be the destination for your project's output targets, change %1$s/cpk.toml and %1$s/.gitignore accordingly.\n",
                 directory);
         } else {
             perror("Could not initialise build directory");
@@ -104,7 +87,7 @@ int init_project(char* directory) {
     if (mkdir(current_filename, 0700)) {
         if (errno == EEXIST) {
             src_exists = true;
-            printf("[INFO] %s file or directory already exists, example main.c will not be created\n", current_filename);
+            printf("Info: %s file or directory already exists, example main.c will not be created\n", current_filename);
         } else {
             perror("Could not initialise src directory");
             return 1;
@@ -139,7 +122,7 @@ int init_project(char* directory) {
     strcpy(current_filename + path_length, "/.cpk");
     if(mkdir(current_filename, 0700)) {
         if(errno == EEXIST) {
-            printf("[INFO] %s already exists, you may want to run cpk relink", current_filename);
+            printf("Info: %s already exists, you may want to run cpk relink", current_filename);
         }
         fprintf(stderr, "Error: %s could not be created: ", current_filename);
         perror("");

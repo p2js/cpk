@@ -48,7 +48,7 @@ CLArgs = \"gh:p2js/clargs\"\n\
 # dev is the default profile (will be used by run/compile when a target arg is not provided)\n\
 dev = {\n\
   build = \"clang $CFLAGS src/main.c src/debug.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
-  ex = \"a.out\" # Executable path to be used by cpk run (in target dir), default: \"a.out\"\n\
+  ex = \"a.out\" # Executable path to be used by cpk run (in target dir)\"\n\
 }";
 
 void help_show(HelpCommand cmd) {
