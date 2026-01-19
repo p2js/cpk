@@ -61,8 +61,8 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         size_t a = strlen(ident_string);
         int i;
         for (i = 3; i < a; i++) {
-            if (ident_string[i] == '-') {
-                strcpy(ident.git_path, ident_string + i + 1);
+            if (ident_string[i] == ':' && ident_string[i + 1] == ':') {
+                strcpy(ident.git_path, ident_string + i + 2);
                 break;
             }
         }
@@ -74,14 +74,14 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         size_t a = strlen(ident_string);
         int i;
         for (i = 2; i < a; i++) {
-            if (ident_string[i] == '-') {
-                strcpy(ident.git_path, ident_string + i + 1);
+            if (ident_string[i] == ':' && ident_string[i + 1] == ':') {
+                strcpy(ident.git_path, ident_string + i + 2);
                 break;
             }
         }
         // Copy the remaining URL
         strncat(ident.URL, ident_string + 4, i - 4);
-    } else if(!strncmp("file:", ident_string, 5)) {
+    } else if (!strncmp("file:", ident_string, 5)) {
         // Local file on disk
         ident.mode = DEPENDENCY_FILE;
         strcpy(ident.path, ident_string + 5);
@@ -96,7 +96,7 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
 };
 
 int store_get_dependency(store_dependency_identifier dependency) {
-    if(dependency.mode == DEPENDENCY_FILE) return 0; // Local dependencies do not need to be installed
+    if (dependency.mode == DEPENDENCY_FILE) return 0;  // Local dependencies do not need to be installed
     if (dependency.mode == DEPENDENCY_WEB) {
         printf("Downloading non-git dependencies is currently unimplemented\n");
         return 1;
@@ -149,7 +149,7 @@ int store_remove_dependency(store_dependency_identifier dependency) {
 }
 
 int store_update_dependency(store_dependency_identifier dependency) {
-    switch(dependency.mode) {
+    switch (dependency.mode) {
         case DEPENDENCY_FILE:
             return 0;
         case DEPENDENCY_WEB:
