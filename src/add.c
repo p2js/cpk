@@ -1,5 +1,5 @@
 #include "store/store.h"
-#include "tomlc17/tomlc17.h"
+#include "tomlc17/src/tomlc17.h"
 
 /**
  * Installs all the dependencies from the parsed cpk.toml

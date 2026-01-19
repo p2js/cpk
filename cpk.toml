@@ -1,8 +1,13 @@
 target_dir = "build"
 
+[dependencies]
+
+xxHash = "gh:cyan4973/xxHash"
+tomlc17 = "gh:cktan/tomlc17"
+
 [targets]
 
 dev = {
-    build = "clang src/main.c -o cpk",
+    build = "clang $CFLAGS src/main.c -o cpk",
     ex = "cpk"
 }

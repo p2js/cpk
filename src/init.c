@@ -12,6 +12,24 @@ const char* INIT_DEFAULT_MAIN =
 int main(void) {\n\
     printf(\"Hello World!\\n\");\n\
 }\n";
+
+const char* TOML_EXAMPLE_2 =
+    "target_dir = \"build\" # Directory for all targets' builds\n\
+\n\
+[dependencies] # dependencies map names to repositories/files\n\
+\n\
+# Add your own here, manually or via cpk add...\n\
+\n\
+[targets]\n\
+# targets map target names to build commands (for use with cpk run/compile)\n\
+# all files produced by the build command in the project folder will be output to target_dir/target_name\n\
+\n\
+# dev is the default profile (will be used by run/compile when a target arg is not provided)\n\
+dev = {\n\
+  build = \"clang $CFLAGS src/main.c src/debug.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
+  ex = \"a.out\" # Executable path to be used by cpk run (in target dir), default: \"a.out\"\n\
+}";
+
 const char* INIT_DEFAULT_TOML =
     "target_dir = \"build\" # Directory for all targets' builds\n\
 \n\
@@ -34,6 +52,7 @@ dev = {\n\
  *
  * Files created:
  * cpk.toml   - configuration file (must not already exist)
+ * .cpk       - dependency symlink directory
  * build      - output directory
  * src        - source code directory
  * src/main.c - starter source file (will not be created if src already exists)
@@ -115,6 +134,18 @@ int init_project(char* directory) {
     }
     fprintf(fp_gitignore, "%s", INIT_DEFAULT_GITIGNORE);
     fclose(fp_gitignore);
+
+    // .cpk dir: Just create
+    strcpy(current_filename + path_length, "/.cpk");
+    if(mkdir(current_filename, 0700)) {
+        if(errno == EEXIST) {
+            printf("[INFO] %s already exists, you may want to run cpk relink", current_filename);
+        }
+        fprintf(stderr, "Error: %s could not be created: ", current_filename);
+        perror("");
+        return 1;
+    }
+
 
     if (src_exists) {
         printf("Project initialised. Start by editing %s/cpk.toml configuration to fit your project.\n", directory);

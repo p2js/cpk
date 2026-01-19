@@ -7,11 +7,11 @@
 #include "help.c"
 #include "init.c"
 #include "store/store.c"
-#include "tomlc17/tomlc17.c"
-#include "tomlc17/tomlc17.h"
+#include "tomlc17/src/tomlc17.c"
+#include "tomlc17/src/tomlc17.h"
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
-#include "xxhash/xxhash.h"
+#include "xxHash/xxhash.h"
 
 int main(int argc, char* argv[]) {
     if (argc == 1 || !strcmp("help", argv[1])) {
@@ -28,11 +28,13 @@ int main(int argc, char* argv[]) {
     }
 
     if (!strcmp("remove", argv[1])) {
-        store_init();
-        for (size_t i = 2; i < argc; i++) {
-            store_dependency_identifier id = store_resolve_identifier(argv[i]);
-            printf("%s -- PATH %s -- URL %s -- GIT PATH %s\n", argv[i], id.path, id.URL, id.git_path);
+        if(argc < 3) {
+            printf("Please provide a dependency identifier to remove from the global store.\n");
+            return 1;
         }
+        printf("Removing %s from the global dependency store\n", argv[2]);
+        store_init();
+        return store_remove_dependency(store_resolve_identifier(argv[2]));
     }
 
     // The next options all require parsing configuration
@@ -59,6 +61,7 @@ int main(int argc, char* argv[]) {
         if (!exit_code) exit_code = run_target(target, config, run_argv);
     }
     if (!strcmp("install", argv[1])) {
+        store_init();
         exit_code = install_dependencies(config);
     }
 

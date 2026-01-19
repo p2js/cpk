@@ -45,9 +45,9 @@ CLArgs = \"gh:p2js/clargs\"\n\
 # targets map target names to build commands (for use with cpk run/compile)\n\
 # all files produced by the build command in the project folder will be output to target_dir/target_name\n\
 \n\
-# dev is the default profile (will be used by run/compile when a target is not provided)\n\
+# dev is the default profile (will be used by run/compile when a target arg is not provided)\n\
 dev = {\n\
-  build = \"clang src/main.c src/debug.c\", # Build command\n\
+  build = \"clang $CFLAGS src/main.c src/debug.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
   ex = \"a.out\" # Executable path to be used by cpk run (in target dir), default: \"a.out\"\n\
 }";
 

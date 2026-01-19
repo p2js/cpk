@@ -12,7 +12,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../xxhash/xxhash.h"
+#include "xxHash/xxhash.h"
 
 const char* GITHUB_URL = "https://github.com/";
 
@@ -131,7 +131,9 @@ int store_get_dependency(store_dependency_identifier dependency) {
 }
 
 int store_remove_dependency(store_dependency_identifier dependency) {
-    if (rmdir(dependency.path)) {
+    char rm_command[4096 + 7] = "rm -rf ";
+    strcat(rm_command, dependency.path);
+    if (system(rm_command)) {
         perror("Error removing dependency from global store");
         return 1;
     }
@@ -150,7 +152,6 @@ int store_update_dependency(store_dependency_identifier dependency) {
 
 int store_create_symlink(store_dependency_identifier dependency, const char* local_name) {
     // Create .cpk folder if it doesn't already exist
-    printf("Creating symlink\n");
     if (mkdir(".cpk", 0700) && errno != EEXIST) {
         perror("Could not create .cpk dependency directory");
         return 1;

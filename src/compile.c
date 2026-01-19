@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "dir/snapshot.h"
-#include "tomlc17/tomlc17.h"
+#include "tomlc17/src/tomlc17.h"
 
 int compile_target(char* target, toml_result_t config) {
     // Check that the config defines the given target
@@ -56,6 +56,15 @@ int compile_target(char* target, toml_result_t config) {
     }
     const char* build_command = toml_target_build.u.str.ptr;
 
+    // Inject dependencies via CFLAGS environment variable
+    char* original_cflags = getenv("CFLAGS");
+    if (!original_cflags) original_cflags = "";
+    char* new_cflags = calloc(strlen(original_cflags) + 7, sizeof(char));
+    strcpy(new_cflags, original_cflags);
+    strcat(new_cflags, " -I.cpk");
+
+    setenv("CFLAGS", new_cflags, true);
+
     // Capture project directory before build command
     dir_snapshot before = snapshot_directory(".");
 
@@ -78,6 +87,10 @@ int compile_target(char* target, toml_result_t config) {
     snapshot_free(&before);
     snapshot_free(&after);
     snapshot_free(&diff);
+
+    // reset CFLAGS
+    free(new_cflags);
+    setenv("CFLAGS", original_cflags, true);
 
     return 0;
 }

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "tomlc17/tomlc17.h"
+#include "tomlc17/src/tomlc17.h"
 
 toml_result_t parse_config() {
     FILE* toml_cpk_fp = fopen("cpk.toml", "r");
