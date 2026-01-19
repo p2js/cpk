@@ -5,8 +5,6 @@
 #ifndef _CPK_STORE_H
 #define _CPK_STORE_H
 
-#include <stdbool.h>
-
 typedef struct {
     /**
      * Path of the dependency's store folder.
@@ -20,7 +18,11 @@ typedef struct {
     /**
      * Boolean to indicate whether this is a git repository or source file.
      */
-    bool git;
+    enum {
+        DEPENDENCY_FILE,
+        DEPENDENCY_GIT,
+        DEPENDENCY_WEB
+    } mode;
     /**
      * Path to check out in git.
      * "" for unspecified path (latest commit of main branch)

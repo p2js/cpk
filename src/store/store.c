@@ -5,7 +5,6 @@
 #include "store.h"
 
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +55,7 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
     sprintf(ident.path, "%s%016lx%016lx", store_dir, ident_string_hash.high64, ident_string_hash.low64);
 
     if (!strncmp("gh:", ident_string, 3)) {
-        ident.git = true;
+        ident.mode = DEPENDENCY_GIT;
         strcpy(ident.URL, GITHUB_URL);
         // Determine potential git path at end then cut off string
         size_t a = strlen(ident_string);
@@ -70,7 +69,7 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         // Copy the remaining URL to the right field
         strncat(ident.URL, ident_string + 3, i - 3);
     } else if (!strncmp("git:", ident_string, 4)) {
-        ident.git = true;
+        ident.mode = DEPENDENCY_GIT;
         // Determine potential git path at end then cut off string
         size_t a = strlen(ident_string);
         int i;
@@ -82,7 +81,13 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         }
         // Copy the remaining URL
         strncat(ident.URL, ident_string + 4, i - 4);
+    } else if(!strncmp("file:", ident_string, 5)) {
+        // Local file on disk
+        ident.mode = DEPENDENCY_FILE;
+        strcpy(ident.path, ident_string + 5);
+        printf(".path = %s\n", ident.path);
     } else {
+        ident.mode = DEPENDENCY_WEB;
         // Simple URL
         strcpy(ident.URL, ident_string);
     }
@@ -91,7 +96,8 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
 };
 
 int store_get_dependency(store_dependency_identifier dependency) {
-    if (!dependency.git) {
+    if(dependency.mode == DEPENDENCY_FILE) return 0; // Local dependencies do not need to be installed
+    if (dependency.mode == DEPENDENCY_WEB) {
         printf("Downloading non-git dependencies is currently unimplemented\n");
         return 1;
     }
@@ -107,7 +113,7 @@ int store_get_dependency(store_dependency_identifier dependency) {
 
     chdir(dependency.path);
 
-    if (dependency.git) {
+    if (dependency.mode == DEPENDENCY_GIT) {
         char git_clone_command[2048 + 12];
         snprintf(git_clone_command, 2048 + 12, "git clone %s .", dependency.URL);
 
@@ -143,21 +149,25 @@ int store_remove_dependency(store_dependency_identifier dependency) {
 }
 
 int store_update_dependency(store_dependency_identifier dependency) {
-    if (!dependency.git) {
-        printf("Dependency is not a git repository, reinstalling manually\n");
-        store_remove_dependency(dependency);
-        return store_get_dependency(dependency);
+    switch(dependency.mode) {
+        case DEPENDENCY_FILE:
+            return 0;
+        case DEPENDENCY_WEB:
+            printf("Dependency is not a git repository, reinstalling manually\n");
+            store_remove_dependency(dependency);
+            return store_get_dependency(dependency);
+        case DEPENDENCY_GIT:
+            // TODO: use git pull
+            return 0;
     }
-    // TODO: use git pull
-    return 0;
 }
 
 int store_create_symlink(store_dependency_identifier dependency, const char* local_name) {
-    // Create .cpk folder if it doesn't already exist
-    if (mkdir(".cpk", 0700) && errno != EEXIST) {
-        perror("Could not create .cpk dependency directory");
-        return 1;
-    }
+    // // Create .cpk folder if it doesn't already exist
+    // if (mkdir(".cpk", 0700) && errno != EEXIST) {
+    //     perror("Could not create .cpk dependency directory");
+    //     return 1;
+    // }
 
     char local_dependency_path[4096];
     strcpy(local_dependency_path, ".cpk/");
