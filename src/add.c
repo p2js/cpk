@@ -1,5 +1,6 @@
-#include <sys/stat.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #include "store/store.h"
 #include "tomlc17/src/tomlc17.h"
@@ -9,10 +10,10 @@
  */
 int install_dependencies(toml_result_t config) {
     // Remove and recreate .cpk directory
-    if(system("rm -rf .cpk")) {
+    if (system("rm -rf .cpk")) {
         perror("Warning: Could not remove .cpk directory, will install and link dependencies anyway");
     } else {
-        if(mkdir(".cpk", 0700)) {
+        if (mkdir(".cpk", 0700)) {
             perror("Error: Could not create cpk directory");
             return 1;
         }
