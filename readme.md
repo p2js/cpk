@@ -34,6 +34,8 @@ The primary purpose of this project is to enable easy installation and managemen
 
 Dependencies can be added by using `cpk add (name=dep)`, with `name` being the local name to reference the dependency in the project and `dep` being one of the dependency types listed below. You can also add these manually to the `dependencies` table in `cpk.toml`.
 
+> Take care to use the provided format for the dependencies table rather than defining `dependency.[name]` directly, otherwise the add and remove commands will not work as they are currently implemented.
+
 If you need to install dependencies from a downloaded project, ones manually added to `cpk.toml` or you are looking to fix the symlinks, use `cpk install`.
 
 The same dependency can be used in different projects (even under different names) without multiple installations, as dependencies are stored globally and symlinked per-project.

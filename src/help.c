@@ -23,7 +23,7 @@ Commands for project compilation:\n\
 Commands for project dependency management:\n\
 \tcpk install\t\tInstall and link all the dependencies specified in cpk.toml\n\
 \tcpk add (name=dep)+\tAdd one or more dependencies to cpk.toml and install them\n\
-\tcpk remove (name)+\tRemove one or more dependencies from cpk.toml and the project\n\
+\tcpk remove (name)\tRemove a dependency from cpk.toml and the project\n\
 Commands for dependency store management:\n\
 \tcpk update (dep)\tUpdate/reinstall a dependency in the global store\n\
 \tcpk delete (dep)\tRemove a dependency from the global store\n\

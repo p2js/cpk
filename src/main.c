@@ -29,12 +29,12 @@ int main(int argc, char* argv[]) {
         return init_project(init_dir);
     }
 
-    if (!strcmp("remove", argv[1])) {
+    if (!strcmp("delete", argv[1])) {
         if (argc < 3) {
-            printf("Please provide a dependency identifier to remove from the global store.\n");
+            printf("Please provide a dependency identifier to delete from the global store.\n");
             return 1;
         }
-        printf("Removing %s from the global dependency store\n", argv[2]);
+        printf("Deleting %s from the global dependency store\n", argv[2]);
         store_init();
         return store_remove_dependency(store_resolve_identifier(argv[2]));
     }
@@ -69,6 +69,14 @@ int main(int argc, char* argv[]) {
     if (!strcmp("add", argv[1])) {
         store_init();
         exit_code = add_dependencies(argv + 2, config);
+    }
+    if (!strcmp("remove", argv[1])) {
+        if (argc < 3) {
+            printf("No dependency name was specified\n");
+            exit_code = 1;
+        } else {
+            exit_code = remove_dependency(argv[2], config);
+        }
     }
 
     if (exit_code == -1) {

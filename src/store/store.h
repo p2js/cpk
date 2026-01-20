@@ -36,5 +36,6 @@ int store_get_dependency(store_dependency_identifier dependency);
 int store_remove_dependency(store_dependency_identifier dependency);
 int store_update_dependency(store_dependency_identifier dependency);
 int store_create_symlink(store_dependency_identifier dependency, const char* local_name);
+int store_remove_symlink(const char* local_name);
 
 #endif

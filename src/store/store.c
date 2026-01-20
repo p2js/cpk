@@ -98,7 +98,7 @@ int store_get_dependency(store_dependency_identifier dependency) {
         printf("Downloading non-git dependencies is currently unimplemented\n");
         return 1;
     }
-    char cwd[4096];  // TODO: Move this outside to general commands to
+    char cwd[4096];
     getcwd(cwd, 4096);
 
     if (mkdir(dependency.path, 0700)) {
@@ -136,13 +136,9 @@ int store_get_dependency(store_dependency_identifier dependency) {
 }
 
 int store_remove_dependency(store_dependency_identifier dependency) {
-    char rm_command[4096 + 7] = "rm -rf ";
+    char rm_command[4096 + 27] = "rm -r --interactive=never ";
     strcat(rm_command, dependency.path);
-    if (system(rm_command)) {
-        perror("Error removing dependency from global store");
-        return 1;
-    }
-    return 0;
+    return system(rm_command);
 }
 
 int store_update_dependency(store_dependency_identifier dependency) {
@@ -170,5 +166,18 @@ int store_create_symlink(store_dependency_identifier dependency, const char* loc
         perror("");
         return 1;
     }
+    return 0;
+}
+
+int store_remove_symlink(const char* local_name) {
+    char local_dependency_path[4096];
+    strcpy(local_dependency_path, ".cpk/");
+    strcat(local_dependency_path, local_name);
+
+    if (unlink(local_dependency_path)) {
+        perror("Could not unlink dependency");
+        return 1;
+    }
+
     return 0;
 }

@@ -24,7 +24,7 @@ void config_free(toml_result_t config) {
     toml_free(config);
 }
 
-int config_add_dependencies(char* dependencies_block) {
+int config_write_dependencies(char* dependencies_block) {
     // read entire cpk.toml
     FILE* f = fopen("cpk.toml", "r");
     if (!f) {
@@ -53,14 +53,11 @@ int config_add_dependencies(char* dependencies_block) {
 
     while (*p) {
         char* line_start = p;
-
         // move to end of line
         while (*p && *p != '\n') p++;
         char* line_end = p;
-
         // skip newline
         if (*p == '\n') p++;
-
         // trim leading whitespace
         char* trimmed = line_start;
         while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
@@ -70,7 +67,6 @@ int config_add_dependencies(char* dependencies_block) {
             break;
         }
     }
-
     if (!deps_start) {
         // not found, append at end
         FILE* out = fopen("cpk.toml", "a");
@@ -99,7 +95,6 @@ int config_add_dependencies(char* dependencies_block) {
             break;
         }
     }
-
     // Build new file contents
     size_t prefix_len = deps_start - file;
     size_t suffix_len = strlen(deps_end);
@@ -118,7 +113,6 @@ int config_add_dependencies(char* dependencies_block) {
     memcpy(new_file + prefix_len, dependencies_block, new_block_len);
     new_file[prefix_len + new_block_len] = '\n';
     memcpy(new_file + prefix_len + new_block_len + 1, deps_end, suffix_len + 1);
-
     // write back to file
     FILE* out = fopen("cpk.toml", "w");
     if (!out) {
@@ -127,7 +121,6 @@ int config_add_dependencies(char* dependencies_block) {
         free(new_file);
         return 1;
     }
-
     fwrite(new_file, 1, strlen(new_file), out);
     fclose(out);
 

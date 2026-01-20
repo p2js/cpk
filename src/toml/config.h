@@ -2,4 +2,4 @@
 
 toml_result_t config_parse();
 void config_free(toml_result_t config);
-int config_add_dependencies(char* dependencies);
+int config_write_dependencies(char* dependencies);
