@@ -47,8 +47,7 @@ int install_dependencies(toml_result_t config) {
 }
 
 /**
- * d
- *
+ * Growable string struct used to rebuild dependency tables to rewrite to cpk.toml.
  */
 typedef struct {
     char* ptr;

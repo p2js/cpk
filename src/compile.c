@@ -26,15 +26,20 @@ int compile_target(char* target, toml_result_t config) {
     if (toml_target_dir.type != TOML_STRING) {
         fprintf(stderr, "Info: cpk.toml: target_dir not defined, using current directory\n");
     }
-    const char* target_dir = toml_target_dir.type == TOML_STRING 
-        ? toml_target_dir.u.str.ptr
-        : NULL;
+    const char* target_dir = toml_target_dir.type == TOML_STRING
+                                 ? toml_target_dir.u.str.ptr
+                                 : NULL;
     int target_dir_len = toml_target_dir.type == TOML_STRING ? toml_target_dir.u.str.len : 0;
 
     char dirpath[4096];
     bool move = true;
 
-    if(target_dir) {
+    if (target_dir_len + strlen(target) + 2 > 4096) {
+        fprintf(stderr, "Error: target directory path is too long");
+        return 1;
+    }
+
+    if (target_dir) {
         // Make the build and target directories if they don't already exist
         if (mkdir(target_dir, 0700) && errno != EEXIST) {
             fprintf(stderr, "Error: Could not create targets directory %s: ", target_dir);
@@ -65,8 +70,8 @@ int compile_target(char* target, toml_result_t config) {
 
     // Inject dependencies via CFLAGS environment variable
     char* original_cflags = getenv("CFLAGS");
-    if (!original_cflags) original_cflags = "";
-    char* new_cflags = calloc(strlen(original_cflags) + 7, sizeof(char));
+
+    char* new_cflags = calloc(strlen(original_cflags) + 8, sizeof(char));
     strcpy(new_cflags, original_cflags);
     strcat(new_cflags, " -I.cpk");
 
@@ -81,6 +86,7 @@ int compile_target(char* target, toml_result_t config) {
     if (build_result) {
         fprintf(stderr, "Error: build command returned non-zero exit code\n");
         snapshot_free(&before);
+        free(new_cflags);
         return build_result;
     }
     // Capture and diff directory after build, move any new files to target
@@ -98,7 +104,11 @@ int compile_target(char* target, toml_result_t config) {
 
     // reset CFLAGS
     free(new_cflags);
-    setenv("CFLAGS", original_cflags, true);
+    if (original_cflags) {
+        setenv("CFLAGS", original_cflags, true);
+    } else {
+        unsetenv("CFLAGS");
+    }
 
     return 0;
 }
@@ -116,16 +126,16 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
     }
     const char* executable_name = target_ex.u.str.ptr;
     toml_datum_t toml_target_dir = toml_get(config.toptab, "target_dir");
-    if(toml_target_dir.type == TOML_STRING) {
-        snprintf(executable_path, 4096, 
-            "%s/%s/%s", 
-            toml_target_dir.u.str.ptr, 
-            target, 
+    if (toml_target_dir.type == TOML_STRING) {
+        snprintf(executable_path, 4096,
+            "%s/%s/%s",
+            toml_target_dir.u.str.ptr,
+            target,
             executable_name);
     } else {
         strcpy(executable_path, executable_name);
     }
-    
+
     printf("> %s", executable_path);
 
     for (size_t i = 0; argv[i] != NULL; i++) {

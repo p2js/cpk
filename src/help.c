@@ -35,13 +35,6 @@ Dependency types:\n\
 \ttar:(URL)\t\t.tar.gz tarball hosted at URL\n\
 \tfile:(path)\t\tLocal file/directory (absolute path or relative from .cpk directory, ie add a ../)";
 
-/*
-- `web:(URL)` represents a single source file hosted at URL.
-- `zip:(URL)` represents a ZIP archive of a soruce directory hosted at URL.
-- `tar:(URL)` represents a `.tar.gz` tarball hosted at URL.
-
-*/
-
 const char* TOML_EXAMPLE =
     "Example cpk.toml:\n\
 \n\

@@ -100,6 +100,7 @@ int main(int argc, char* argv[]) {
 
     if (exit_code == -1) {
         printf("Unknown command '%s'\nTo view a list of commands, use 'cpk help'\n", argv[1]);
+        exit_code = 1;
     }
 
     config_free(config);

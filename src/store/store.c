@@ -31,10 +31,22 @@ static char store_dir[4096];
  */
 int store_init() {
     char* xdg_cache_home = getenv("XDG_CACHE_HOME");
+
     if (xdg_cache_home) {
+        if (strlen(xdg_cache_home) + 6 > 4096) {
+            fprintf(stderr, "Error: Could not initialise dependency store, XDG_CACHE_HOME path is too long");
+        }
         strcpy(store_dir, xdg_cache_home);
         strcat(store_dir, "/cpk/");
     } else {
+        char* home = getenv("HOME");
+        if (!home) {
+            fprintf(stderr, "Error: Could not initialise dependency store, HOME is not set");
+            return 1;
+        }
+        if (strlen(home) + 13 > 4096) {
+            fprintf(stderr, "Error: Could not initialise dependency store, HOME path is too long");
+        }
         strcpy(store_dir, getenv("HOME"));
         strcat(store_dir, "/.cache/cpk/");
     }
@@ -60,12 +72,17 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         int i;
         for (i = 3; i < a; i++) {
             if (ident_string[i] == ':' && ident_string[i + 1] == ':') {
-                strcpy(ident.git_path, ident_string + i + 2);
+                strncpy(ident.git_path, ident_string + i + 2, 256);
                 break;
             }
         }
         // Copy the remaining URL to the right field
-        strncat(ident.URL, ident_string + 3, i - 3);
+        if (i >= 2048) {
+            fprintf(stderr, "Error: %s: URL is too long", ident_string);
+            ident.mode = DEPENDENCY_UNKNOWN;
+        } else {
+            strncat(ident.URL, ident_string + 3, i - 3);
+        }
     } else if (!strncmp("git:", ident_string, 4)) {
         ident.mode = DEPENDENCY_GIT;
         // Determine potential git path at end then cut off string
@@ -86,15 +103,27 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
     } else if (!strncmp("web:", ident_string, 4)) {
         ident.mode = DEPENDENCY_WEB;
         // Simple URL
-        strcpy(ident.URL, ident_string + 4);
+        if (strlen(ident_string + 4) > 2048) {
+            fprintf(stderr, "Errpr: %s: URL is too long", ident_string);
+        } else {
+            strcpy(ident.URL, ident_string + 4);
+        }
     } else if (!strncmp("zip:", ident_string, 4)) {
         ident.mode = DEPENDENCY_ZIP;
         // Simple URL
-        strcpy(ident.URL, ident_string + 4);
+        if (strlen(ident_string + 4) > 2048) {
+            fprintf(stderr, "Errpr: %s: URL is too long", ident_string);
+        } else {
+            strcpy(ident.URL, ident_string + 4);
+        }
     } else if (!strncmp("tar:", ident_string, 4)) {
         ident.mode = DEPENDENCY_TAR;
         // Simple URL
-        strcpy(ident.URL, ident_string + 4);
+        if (strlen(ident_string + 4) > 2048) {
+            fprintf(stderr, "Errpr: %s: URL is too long", ident_string);
+        } else {
+            strcpy(ident.URL, ident_string + 4);
+        }
     } else {
         fprintf(stderr, "Error: %s does not represent a valid dependency identifier\n", ident_string);
         ident.mode = DEPENDENCY_UNKNOWN;
@@ -176,6 +205,10 @@ int store_update_dependency(store_dependency_identifier dependency) {
 
 int store_create_symlink(store_dependency_identifier dependency, const char* local_name) {
     char local_dependency_path[4096];
+    if (strlen(local_name) + 6 > 4096) {
+        fprintf(stderr, "Could not link %s: Local name is too long", local_name);
+        return 1;
+    }
     strcpy(local_dependency_path, ".cpk/");
     strcat(local_dependency_path, local_name);
 
@@ -189,6 +222,10 @@ int store_create_symlink(store_dependency_identifier dependency, const char* loc
 
 int store_remove_symlink(const char* local_name) {
     char local_dependency_path[4096];
+    if (strlen(local_name) + 6 > 4096) {
+        fprintf(stderr, "Could not unlink %s: Local name is too long", local_name);
+        return 1;
+    }
     strcpy(local_dependency_path, ".cpk/");
     strcat(local_dependency_path, local_name);
 

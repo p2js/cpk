@@ -49,6 +49,11 @@ int init_project(char* directory) {
     }
 
     size_t path_length = strlen(directory);
+    if (path_length > 4096 - 12) {
+        fprintf(stderr, "Error: Path too long");
+        return 1;
+    }
+
     if (directory[path_length - 1] == '/') {
         directory[path_length - 1] = '\0';
         path_length--;
@@ -123,10 +128,11 @@ int init_project(char* directory) {
     if (mkdir(current_filename, 0700)) {
         if (errno == EEXIST) {
             printf("Info: %s already exists, you may want to rerun cpk install\n", current_filename);
+        } else {
+            fprintf(stderr, "Error: %s could not be created: ", current_filename);
+            perror("");
+            return 1;
         }
-        fprintf(stderr, "Error: %s could not be created: ", current_filename);
-        perror("");
-        return 1;
     }
 
     if (src_exists) {
