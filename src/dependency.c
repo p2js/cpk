@@ -134,20 +134,50 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
     for (size_t i = 0; new_dependencies[i] != NULL; i++) {
         char* dep_equals = strchr(new_dependencies[i], '=');
         if (!dep_equals) {
-            fprintf(stderr, "Error parsing dependency \"%s\": No equals sign separating local name from dependency value\n", new_dependencies[i]);
+            fprintf(stderr, "Error parsing dependency \"%s\": No equals sign separating local name from dependency value\nThis dependency will be skipped.\n", new_dependencies[i]);
             continue;
         }
 
-        // Split into key=value
+        // split into key=value
         size_t key_len = dep_equals - new_dependencies[i];
         char dependency_key[256];
+        if (key_len == 0) {
+            fprintf(stderr, "Error: Dependency name not provided in \"%s\".\nThis dependency will be skipped.\n", new_dependencies[i]);
+            continue;
+        }
         if (key_len >= sizeof(dependency_key)) {
-            fprintf(stderr, "Error: dependency key too long (max 256 characters): %s\n", new_dependencies[i]);
+            fprintf(stderr, "Error: dependency name \"%s\"is too long (max 256 characters)\nThis dependency will be skipped.\n", new_dependencies[i]);
             continue;
         }
         memcpy(dependency_key, new_dependencies[i], key_len);
         dependency_key[key_len] = 0;
         const char* dependency_value = dep_equals + 1;
+        if (dependency_value[0] == 0) {
+            fprintf(stderr, "Error, Dependency value not provided in \"%s\".\nThis dependency will be skipped.\n", new_dependencies[i]);
+            continue;
+        }
+
+        // check that the key was not already defined in previous toml or arg dependencies
+        bool duplicate = false;
+        const char* p = dep_string.ptr;
+        while (*p) {
+            const char* line_start = p;
+            const char* newline = strchr(p, '\n');
+            size_t len = newline ? (size_t)(newline - p) : strlen(p);
+            // check if line starts with 'key ='
+            if (len > key_len + 3 && strncmp(line_start, dependency_key, key_len) == 0 && line_start[key_len] == ' ' && line_start[key_len + 1] == '=') {
+                duplicate = true;
+                break;
+            }
+            // move to next line
+            p = newline ? newline + 1 : p + len;
+        }
+
+        if (duplicate) {
+            printf("Error adding dependency \"%1$s\": Dependency name \"%2$s\" was already defined in cpk.toml or another argument.\nIf you intended to replace it, please run \"cpk remove %2$s\" first.\nThis dependency will be skipped.\n",
+                new_dependencies[i], dependency_key);
+            continue;
+        }
 
         // Install and link the dependency
         printf("Installing and linking %s from %s...\n", dependency_key, dependency_value);
