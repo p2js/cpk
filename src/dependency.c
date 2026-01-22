@@ -13,7 +13,7 @@
  */
 int install_dependencies(toml_result_t config) {
     // Remove and recreate .cpk directory
-    if (system("rm -rf .cpk")) {
+    if (system("rm -r .cpk")) {
         perror("Warning: Could not remove .cpk directory, will install and link dependencies anyway");
     } else {
         if (mkdir(".cpk", 0700)) {
