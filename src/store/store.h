@@ -19,9 +19,12 @@ typedef struct {
      * Boolean to indicate whether this is a git repository or source file.
      */
     enum {
+        DEPENDENCY_UNKNOWN = 0,
         DEPENDENCY_FILE,
         DEPENDENCY_GIT,
-        DEPENDENCY_WEB
+        DEPENDENCY_WEB,
+        DEPENDENCY_ZIP,
+        DEPENDENCY_TAR
     } mode;
     /**
      * Path to check out in git.

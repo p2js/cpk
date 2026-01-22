@@ -38,11 +38,7 @@ int install_dependencies(toml_result_t config) {
         }
         printf("Installing and linking %s from %s...\n", dependency_key, dependency_value.u.str.ptr);
         store_dependency_identifier identifier = store_resolve_identifier(dependency_value.u.str.ptr);
-        if (store_get_dependency(identifier)) {
-            exit_code = 1;
-            continue;
-        };
-        if (store_create_symlink(identifier, dependency_key)) {
+        if (!identifier.mode || store_get_dependency(identifier) || store_create_symlink(identifier, dependency_key)) {
             exit_code = 1;
             continue;
         }
@@ -174,7 +170,7 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
         }
 
         if (duplicate) {
-            printf("Error adding dependency \"%1$s\": Dependency name \"%2$s\" was already defined in cpk.toml or another argument.\nIf you intended to replace it, please run \"cpk remove %2$s\" first.\nThis dependency will be skipped.\n",
+            fprintf(stderr, "Error adding dependency \"%1$s\": Dependency name \"%2$s\" was already defined in cpk.toml or another argument.\nIf you intended to replace it, please run \"cpk remove %2$s\" first.\nThis dependency will be skipped.\n",
                 new_dependencies[i], dependency_key);
             continue;
         }
@@ -182,6 +178,9 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
         // Install and link the dependency
         printf("Installing and linking %s from %s...\n", dependency_key, dependency_value);
         store_dependency_identifier identifier = store_resolve_identifier(dependency_value);
+        if (!identifier.mode) {
+            fprintf(stderr, "This dependency will be skipped.\n");
+        }
         store_get_dependency(identifier) || store_create_symlink(identifier, dependency_key);
         size_t space_needed = key_len + strlen(dependency_value) + 7;  // key = "val"\n, plus an extra space for a null-terminator if at end
 

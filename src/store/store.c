@@ -83,10 +83,21 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         // Local file on disk
         ident.mode = DEPENDENCY_FILE;
         strcpy(ident.path, ident_string + 5);
-    } else {
+    } else if (!strncmp("web:", ident_string, 4)) {
         ident.mode = DEPENDENCY_WEB;
         // Simple URL
-        strcpy(ident.URL, ident_string);
+        strcpy(ident.URL, ident_string + 4);
+    } else if (!strncmp("zip:", ident_string, 4)) {
+        ident.mode = DEPENDENCY_ZIP;
+        // Simple URL
+        strcpy(ident.URL, ident_string + 4);
+    } else if (!strncmp("tar:", ident_string, 4)) {
+        ident.mode = DEPENDENCY_TAR;
+        // Simple URL
+        strcpy(ident.URL, ident_string + 4);
+    } else {
+        fprintf(stderr, "Error: %s does not represent a valid dependency identifier\n", ident_string);
+        ident.mode = DEPENDENCY_UNKNOWN;
     }
 
     return ident;
@@ -94,7 +105,7 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
 
 int store_get_dependency(store_dependency_identifier dependency) {
     if (dependency.mode == DEPENDENCY_FILE) return 0;  // Local dependencies do not need to be installed
-    if (dependency.mode == DEPENDENCY_WEB) {
+    if (dependency.mode != DEPENDENCY_GIT) {
         printf("Downloading non-git dependencies is currently unimplemented\n");
         return 1;
     }
@@ -146,10 +157,6 @@ int store_update_dependency(store_dependency_identifier dependency) {
         case DEPENDENCY_FILE:
             printf("Dependency is local and therefore cannot be updated\n");
             return 0;
-        case DEPENDENCY_WEB:
-            printf("Dependency is not a git repository, reinstalling manually\n");
-            store_remove_dependency(dependency);
-            return store_get_dependency(dependency);
         case DEPENDENCY_GIT:
             if (chdir(dependency.path)) {
                 perror("Error: Could not find dependency directory");
@@ -160,6 +167,10 @@ int store_update_dependency(store_dependency_identifier dependency) {
                 return 1;
             }
             return 0;
+        default:
+            printf("Dependency is not a git repository, reinstalling manually\n");
+            store_remove_dependency(dependency);
+            return store_get_dependency(dependency);
     }
 }
 
