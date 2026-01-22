@@ -6,6 +6,7 @@
 #include "help.c"
 #include "init.c"
 #include "store/store.c"
+#include "store/store.h"
 #include "toml/config.c"
 // Dependencies
 #include "tomlc17/src/tomlc17.c"
@@ -37,6 +38,16 @@ int main(int argc, char* argv[]) {
         printf("Deleting %s from the global dependency store\n", argv[2]);
         store_init();
         return store_remove_dependency(store_resolve_identifier(argv[2]));
+    }
+
+    if (!strcmp("update", argv[1])) {
+        if (argc < 3) {
+            printf("Please provide a dependency identifier to update in the global store.\n");
+            return 1;
+        }
+        printf("Updating %s in the global dependency store\n", argv[2]);
+        store_init();
+        return store_update_dependency(store_resolve_identifier(argv[2]));
     }
 
     // The next options all require parsing configuration

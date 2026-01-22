@@ -151,7 +151,14 @@ int store_update_dependency(store_dependency_identifier dependency) {
             store_remove_dependency(dependency);
             return store_get_dependency(dependency);
         case DEPENDENCY_GIT:
-            // TODO: use git pull
+            if (chdir(dependency.path)) {
+                perror("Error: Could not find dependency directory");
+                return 1;
+            }
+            if (system("git pull")) {
+                fprintf(stderr, "Error updating dependency from %s", dependency.git_path);
+                return 1;
+            }
             return 0;
     }
 }
