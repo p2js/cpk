@@ -10,7 +10,7 @@ TODO
 
 cpk can be used in two independent ways: as a dependency manager and simple build/run manager.
 
-> For detailed info on commands, use `cpk help`. To see a comprehensive example of everything in the configuration file, use `cpk ex`. Alternatively, you can use this repository as an example of usage, since it uses itself for dependency and build management.
+For detailed info on commands, use `cpk help`. To see a comprehensive example of everything in the configuration file, use `cpk ex`. Alternatively, you can use this repository as an example of usage, since it uses itself for dependency and build management.
 
 ### Initialising a project
 
@@ -34,7 +34,7 @@ The primary purpose of this project is to enable easy installation and managemen
 
 Dependencies can be added by using `cpk add (name=dep)`, with `name` being the local name to reference the dependency in the project and `dep` being one of the dependency types listed below. You can also add these manually to the `dependencies` table in `cpk.toml`.
 
-> Take care to use the provided format for the dependencies table rather than defining `dependency.[name]` directly, otherwise the add and remove commands will not work as they are currently implemented.
+> Take care to use the provided format for the dependencies table rather than defining `dependency.(name)` directly, otherwise the add and remove commands will not work as they are currently implemented.
 
 If you need to install dependencies from a downloaded project, ones manually added to `cpk.toml` or you are looking to fix the symlinks, use `cpk install`.
 
