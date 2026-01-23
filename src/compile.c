@@ -70,9 +70,10 @@ int compile_target(char* target, toml_result_t config) {
 
     // Inject dependencies via CFLAGS environment variable
     char* original_cflags = getenv("CFLAGS");
+    size_t cflags_len = original_cflags ? strlen(original_cflags) : 0;
 
-    char* new_cflags = calloc(strlen(original_cflags) + 8, sizeof(char));
-    strcpy(new_cflags, original_cflags);
+    char* new_cflags = calloc(cflags_len + 8, sizeof(char));
+    strcpy(new_cflags, original_cflags ? original_cflags : "");
     strcat(new_cflags, " -I.cpk");
 
     setenv("CFLAGS", new_cflags, true);

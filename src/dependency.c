@@ -179,6 +179,7 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
         store_dependency_identifier identifier = store_resolve_identifier(dependency_value);
         if (!identifier.mode) {
             fprintf(stderr, "This dependency will be skipped.\n");
+            continue;
         }
         store_get_dependency(identifier) || store_create_symlink(identifier, dependency_key);
         size_t space_needed = key_len + strlen(dependency_value) + 7;  // key = "val"\n, plus an extra space for a null-terminator if at end
