@@ -225,6 +225,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
             if (mkdir(dep_dir, 0700)) {
                 if (errno == EEXIST) {
                     // Dependency directory already exist, do not download
+                    strcpy(dependency->path, dep_dir);
                     return 0;
                 }
                 fprintf(stderr, "Error creating dependency directory %s: ", dep_dir);
@@ -233,6 +234,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
             }
             // curl will download directly to dependency->path
             exit_code = store_curl_dependency(*dependency);
+            if (!exit_code) strcpy(dependency->path, dep_dir);
             break;
         }
         case DEPENDENCY_ZIP: {
