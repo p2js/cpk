@@ -9,6 +9,7 @@
 #include "store/store.h"
 #include "toml/config.c"
 // Dependencies
+#include "miniz/miniz.c"
 #include "tomlc17/src/tomlc17.c"
 #include "tomlc17/src/tomlc17.h"
 
@@ -41,7 +42,7 @@ int main(int argc, char* argv[]) {
         if (!ident.mode) {
             return 1;
         }
-        return store_remove_dependency(ident);
+        return store_remove_dependency(&ident);
     }
 
     if (!strcmp("update", argv[1])) {
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]) {
         if (!ident.mode) {
             return 1;
         }
-        return store_update_dependency(ident);
+        return store_update_dependency(&ident);
     }
 
     // The next options all require parsing configuration

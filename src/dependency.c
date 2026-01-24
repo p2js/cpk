@@ -38,7 +38,7 @@ int install_dependencies(toml_result_t config) {
         }
         printf("Installing and linking %s from %s...\n", dependency_key, dependency_value.u.str.ptr);
         store_dependency_identifier identifier = store_resolve_identifier(dependency_value.u.str.ptr);
-        if (!identifier.mode || store_get_dependency(identifier) || store_create_symlink(identifier, dependency_key)) {
+        if (!identifier.mode || store_get_dependency(&identifier) || store_create_symlink(&identifier, dependency_key)) {
             exit_code = 1;
             continue;
         }
@@ -181,7 +181,7 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
             fprintf(stderr, "This dependency will be skipped.\n");
             continue;
         }
-        store_get_dependency(identifier) || store_create_symlink(identifier, dependency_key);
+        store_get_dependency(&identifier) || store_create_symlink(&identifier, dependency_key);
         size_t space_needed = key_len + strlen(dependency_value) + 7;  // key = "val"\n, plus an extra space for a null-terminator if at end
 
         dep_string_ensure_space(dep_string, space_needed);

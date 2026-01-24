@@ -2,8 +2,9 @@ target_dir = "build"
 
 [dependencies]
 
-xxHash = "gh:cyan4973/xxHash"
+miniz = "zip:https://github.com/richgel999/miniz/releases/download/3.1.0/miniz-3.1.0.zip"
 tomlc17 = "gh:cktan/tomlc17"
+xxHash = "gh:cyan4973/xxHash"
 
 [targets]
 

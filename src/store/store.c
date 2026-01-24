@@ -4,6 +4,7 @@
  */
 #include "store.h"
 
+#include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "../dir/snapshot.h"
+#include "miniz/miniz.h"
 #include "xxHash/xxhash.h"
 
 const char* GITHUB_URL = "https://github.com/";
@@ -104,17 +107,47 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         ident.mode = DEPENDENCY_WEB;
         // Simple URL
         if (strlen(ident_string + 4) > 2048) {
-            fprintf(stderr, "Errpr: %s: URL is too long", ident_string);
+            fprintf(stderr, "Error: %s: URL is too long", ident_string);
+            ident.mode = DEPENDENCY_UNKNOWN;
         } else {
             strcpy(ident.URL, ident_string + 4);
+            // Extract filename from URL
+            const char* filename = strrchr(ident.URL, '/');
+            if (filename) {
+                filename++;  // Move past the '/'
+            } else {
+                filename = "file";  // No slash, use the whole URL as filename
+            }
+
+            if (strlen(ident.path) + strlen(filename) + 2 > 4096) {  // +2 for '/' and 0
+                fprintf(stderr, "Error: Resolved path for %s is too long\n", ident_string);
+                ident.mode = DEPENDENCY_UNKNOWN;
+            } else {
+                strcat(ident.path, "/");
+                strcat(ident.path, filename);
+            }
         }
     } else if (!strncmp("zip:", ident_string, 4)) {
         ident.mode = DEPENDENCY_ZIP;
         // Simple URL
         if (strlen(ident_string + 4) > 2048) {
-            fprintf(stderr, "Errpr: %s: URL is too long", ident_string);
+            fprintf(stderr, "Error: %s: URL is too long", ident_string);
         } else {
             strcpy(ident.URL, ident_string + 4);
+            const char* filename = strrchr(ident.URL, '/');
+            if (filename) {
+                filename++;  // Move past the '/'
+            } else {
+                filename = "file.zip";  // No slash, use a default filename
+            }
+
+            if (strlen(ident.path) + strlen(filename) + 2 > 4096) {  // +2 for '/' and 0
+                fprintf(stderr, "Error: Resolved path for %s is too long\n", ident_string);
+                ident.mode = DEPENDENCY_UNKNOWN;
+            } else {
+                strcat(ident.path, "/");
+                strcat(ident.path, filename);
+            }
         }
     } else if (!strncmp("tar:", ident_string, 4)) {
         ident.mode = DEPENDENCY_TAR;
@@ -132,78 +165,241 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
     return ident;
 };
 
-int store_get_dependency(store_dependency_identifier dependency) {
-    if (dependency.mode == DEPENDENCY_FILE) return 0;  // Local dependencies do not need to be installed
-    if (dependency.mode != DEPENDENCY_GIT) {
-        printf("Downloading non-git dependencies is currently unimplemented\n");
+int store_curl_dependency(store_dependency_identifier dependency) {
+    // No chdir here, curl will download directly to dependency.path
+    char curl_command[2048 + 4096 + 20];  // URL + path + "curl -o " + " " + " -L"
+    snprintf(curl_command, sizeof(curl_command), "curl -o \"%s\" %s -L", dependency.path, dependency.URL);
+    printf("Downloading %s to %s\n", dependency.URL, dependency.path);
+    if (system(curl_command)) {
+        fprintf(stderr, "Error downloading dependency from %s\n", dependency.URL);
         return 1;
     }
-    char cwd[4096];
-    getcwd(cwd, 4096);
-
-    if (mkdir(dependency.path, 0700)) {
-        if (errno == EEXIST) return 0;  // Dependency already in store
-        fprintf(stderr, "Error creating dependency directory for %s: ", dependency.URL);
-        perror("");
-        return 1;
-    }
-
-    chdir(dependency.path);
-
-    if (dependency.mode == DEPENDENCY_GIT) {
-        char git_clone_command[2048 + 12];
-        snprintf(git_clone_command, 2048 + 12, "git clone %s .", dependency.URL);
-
-        if (system(git_clone_command)) {
-            printf("Error cloning dependency from %s\n", dependency.URL);
-            return 1;
-        }
-        if (dependency.git_path[0] != 0) {
-            char git_checkout_command[256 + 13] = "git checkout ";
-            strcat(git_checkout_command, dependency.git_path);
-
-            if (system(git_checkout_command)) {
-                printf("Error checking out %s\n", dependency.git_path);
-                return 1;
-            }
-        }
-    } else {
-        // TODO
-    }
-
-    chdir(cwd);
     return 0;
 }
 
-int store_remove_dependency(store_dependency_identifier dependency) {
+int store_get_dependency(store_dependency_identifier* dependency) {
+    if (dependency->mode == DEPENDENCY_FILE) return 0;  // Local dependencies do not need to be installed
+
+    char cwd[4096];
+    getcwd(cwd, 4096);
+
+    int exit_code = 0;
+    switch (dependency->mode) {
+        case DEPENDENCY_GIT: {
+            if (mkdir(dependency->path, 0700)) {
+                if (errno == EEXIST) {
+                    // Dependency directory already exist, do not download
+                    return 0;
+                }
+                fprintf(stderr, "Error creating dependency directory %s: ", dependency->path);
+                perror("");
+                return 1;
+            }
+            chdir(dependency->path);
+            char git_clone_command[2048 + 12];
+            snprintf(git_clone_command, sizeof(git_clone_command), "git clone %s .", dependency->URL);
+
+            if (system(git_clone_command)) {
+                fprintf(stderr, "Error cloning dependency from %s\n", dependency->URL);
+                exit_code = 1;
+            }
+            if (dependency->git_path[0] != 0) {
+                char git_checkout_command[256 + 13];
+                snprintf(git_checkout_command, sizeof(git_checkout_command), "git checkout %s", dependency->git_path);
+
+                if (system(git_checkout_command)) {
+                    fprintf(stderr, "Error checking out %s\n", dependency->git_path);
+                    exit_code = 1;
+                }
+            }
+            break;
+        }
+        case DEPENDENCY_WEB: {
+            // Create the directory for the dependency
+            char dep_dir[4096];
+            strcpy(dep_dir, dependency->path);
+            char* last_slash = strrchr(dep_dir, '/');
+            if (last_slash != NULL) {
+                *last_slash = 0;  // Null-terminate to get the directory path
+            }
+            if (mkdir(dep_dir, 0700)) {
+                if (errno == EEXIST) {
+                    // Dependency directory already exist, do not download
+                    return 0;
+                }
+                fprintf(stderr, "Error creating dependency directory %s: ", dep_dir);
+                perror("");
+                return 1;
+            }
+            // curl will download directly to dependency->path
+            exit_code = store_curl_dependency(*dependency);
+            break;
+        }
+        case DEPENDENCY_ZIP: {
+            // Create the directory for the dependency
+            char dep_dir[4096];
+            strcpy(dep_dir, dependency->path);
+            char* last_slash = strrchr(dep_dir, '/');
+            if (last_slash != NULL) {
+                *last_slash = 0;  // Null-terminate to get the directory path
+            }
+            if (mkdir(dep_dir, 0700)) {
+                if (errno == EEXIST) {
+                    // Dependency directory already exist, do not download, just update dep path
+                    strcpy(dependency->path, dep_dir);
+                    return 0;
+                }
+                fprintf(stderr, "Error creating dependency directory %s: ", dep_dir);
+                perror("");
+                return 1;
+            }
+
+            exit_code = store_curl_dependency(*dependency);
+            if (exit_code) break;
+
+            // Unzip the downloaded archive
+            chdir(dep_dir);
+            mz_zip_archive zip_archive;
+            memset(&zip_archive, 0, sizeof(zip_archive));
+
+            if (!mz_zip_reader_init_file(&zip_archive, dependency->path, 0)) {
+                fprintf(stderr, "Error: Could not open zip file %s\n", dependency->path);
+                exit_code = 1;
+                break;
+            }
+
+            mz_uint num_files = mz_zip_reader_get_num_files(&zip_archive);
+            for (mz_uint i = 0; i < num_files; i++) {
+                mz_zip_archive_file_stat file_stat;
+                if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat)) {
+                    fprintf(stderr, "Error: Could not get file stat for file in zip\n");
+                    exit_code = 1;
+                    break;
+                }
+
+                // Create parent directories for the file
+                char path_copy[4096];
+                strcpy(path_copy, file_stat.m_filename);
+                char* last_slash_in_path = strrchr(path_copy, '/');
+                if (last_slash_in_path) {
+                    *last_slash_in_path = '\0';  // Null-terminate to get the directory part
+                    mk_subdirectories(path_copy);
+                }
+
+                if (!mz_zip_reader_is_file_a_directory(&zip_archive, i)) {
+                    if (!mz_zip_reader_extract_to_file(&zip_archive, i, file_stat.m_filename, 0)) {
+                        fprintf(stderr, "Error: Could not extract file %s from zip\n", file_stat.m_filename);
+                        exit_code = 1;
+                        break;
+                    }
+                }
+            }
+            mz_zip_reader_end(&zip_archive);
+            if (exit_code) break;
+
+            // If the contents were only 1 folder, move all its contents into the dependency's directory then remove the original folder
+            DIR* dir = opendir(".");
+            if (!dir) {
+                perror("Error: Could not open dependency directory");
+                exit_code = 1;
+                break;
+            }
+
+            struct dirent* entry;
+            int entry_count = 0;
+            char entry_name[1024];
+
+            while ((entry = readdir(dir))) {
+                if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+                entry_count++;
+                strcpy(entry_name, entry->d_name);
+            }
+            closedir(dir);
+
+            if (entry_count == 1) {
+                struct stat path_stat;
+                stat(entry_name, &path_stat);
+                if (S_ISDIR(path_stat.st_mode)) {
+                    // It's a directory, move its contents up
+                    dir = opendir(entry_name);
+                    if (!dir) {
+                        perror("Error: Could not open subdirectory");
+                        exit_code = 1;
+                        break;
+                    }
+                    chdir(entry_name);
+                    while ((entry = readdir(dir))) {
+                        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+
+                        char new_path[4096];
+                        snprintf(new_path, sizeof(new_path), "../%s", entry->d_name);
+                        if (rename(entry->d_name, new_path)) {
+                            perror("Error: Could not move file");
+                            exit_code = 1;
+                            break;
+                        }
+                    }
+                    closedir(dir);
+                    if (exit_code) break;
+                    chdir("..");
+                    if (rmdir(entry_name)) {
+                        perror("Error: Could not remove empty directory");
+                        exit_code = 1;
+                        break;
+                    }
+                }
+            }
+            // Remove the original zip file
+            if (remove(dependency->path)) {
+                perror("Error: Could not remove zip file");
+                exit_code = 1;
+            }
+            // Update the dependency path to the extracted directory
+            strcpy(dependency->path, dep_dir);
+            break;
+        }
+        case DEPENDENCY_TAR:
+            break;
+        // Unreachable
+        case DEPENDENCY_UNKNOWN:
+        case DEPENDENCY_FILE:
+            break;
+    }
+    chdir(cwd);
+    return exit_code;
+}
+
+int store_remove_dependency(store_dependency_identifier* dependency) {
     char rm_command[4096 + 27] = "rm -r --interactive=never ";
-    strcat(rm_command, dependency.path);
+    strcat(rm_command, dependency->path);
     return system(rm_command);
 }
 
-int store_update_dependency(store_dependency_identifier dependency) {
-    switch (dependency.mode) {
+int store_update_dependency(store_dependency_identifier* dependency) {
+    switch (dependency->mode) {
         case DEPENDENCY_FILE:
             printf("Dependency is local and therefore cannot be updated\n");
             return 0;
-        case DEPENDENCY_GIT:
-            if (chdir(dependency.path)) {
+        case DEPENDENCY_GIT: {
+            if (chdir(dependency->path)) {
                 perror("Error: Could not find dependency directory");
                 return 1;
             }
             if (system("git pull")) {
-                fprintf(stderr, "Error updating dependency from %s", dependency.git_path);
+                fprintf(stderr, "Error updating dependency from %s", dependency->git_path);
                 return 1;
             }
             return 0;
-        default:
+        }
+        default: {
             printf("Dependency is not a git repository, reinstalling manually\n");
             store_remove_dependency(dependency);
             return store_get_dependency(dependency);
+        }
     }
 }
 
-int store_create_symlink(store_dependency_identifier dependency, const char* local_name) {
+int store_create_symlink(store_dependency_identifier* dependency, const char* local_name) {
     char local_dependency_path[4096];
     if (strlen(local_name) + 6 > 4096) {
         fprintf(stderr, "Could not link %s: Local name is too long", local_name);
@@ -212,7 +408,7 @@ int store_create_symlink(store_dependency_identifier dependency, const char* loc
     strcpy(local_dependency_path, ".cpk/");
     strcat(local_dependency_path, local_name);
 
-    if (symlink(dependency.path, local_dependency_path) && errno != EEXIST) {
+    if (symlink(dependency->path, local_dependency_path) && errno != EEXIST) {
         fprintf(stderr, "Could not install dependency %s in local project: ", local_name);
         perror("");
         return 1;

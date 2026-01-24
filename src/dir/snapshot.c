@@ -4,6 +4,7 @@
  */
 #include "snapshot.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/dir.h>
@@ -73,10 +74,11 @@ void mk_subdirectories(const char* path) {
     for (char* ptr = temp + 1; *ptr; ptr++) {
         if (*ptr == '/') {
             *ptr = '\0';
-            mkdir(temp, 0700);
+            if (mkdir(temp, 0700) && errno != EEXIST) return;
             *ptr = '/';
         }
     }
+    if (mkdir(temp, 0700) && errno != EEXIST) return;
 }
 
 void move_snapshot_diff_items(dir_snapshot* diff, const char* root, const char* target) {
