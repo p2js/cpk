@@ -36,7 +36,7 @@ int install_dependencies(toml_result_t config) {
             exit_code = 1;
             continue;
         }
-        printf("Installing and linking %s from %s...\n", dependency_key, dependency_value.u.str.ptr);
+        printf("\e[1m(%d/%d)\e[0m Installing and linking %s from %s...\n", i + 1, dependencies_table.u.tab.size, dependency_key, dependency_value.u.str.ptr);
         store_dependency_identifier identifier = store_resolve_identifier(dependency_value.u.str.ptr);
         if (!identifier.mode || store_get_dependency(&identifier) || store_create_symlink(&identifier, dependency_key)) {
             exit_code = 1;
