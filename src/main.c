@@ -18,19 +18,22 @@
 #include "xxHash/xxhash.h"
 
 int main(int argc, char* argv[]) {
+    // cpk help
     if (argc == 1 || !strcmp("help", argv[1])) {
         help_show(HELP);
         return 0;
     }
+    // cpk ex
     if (!strcmp("ex", argv[1])) {
         help_show(EX);
         return 0;
     }
+    // cpk init [dir]
     if (!strcmp("init", argv[1])) {
         char* init_dir = argc >= 3 ? argv[2] : ".";
         return init_project(init_dir);
     }
-
+    // cpk delete (dep)
     if (!strcmp("delete", argv[1])) {
         if (argc < 3) {
             printf("Please provide a dependency identifier to delete from the global store.\n");
@@ -44,7 +47,7 @@ int main(int argc, char* argv[]) {
         }
         return store_remove_dependency(&ident);
     }
-
+    // cpk update (dep)
     if (!strcmp("update", argv[1])) {
         if (argc < 3) {
             printf("Please provide a dependency identifier to update in the global store.\n");
@@ -62,12 +65,13 @@ int main(int argc, char* argv[]) {
     // The next options all require parsing configuration
     toml_result_t config = config_parse();
     int exit_code = -1;
-
+    // cpk compile [target]
     if (!strcmp("compile", argv[1])) {
         char* target = argc >= 3 ? argv[2] : "dev";
         printf("Compiling target %s\n", target);
         exit_code = compile_target(target, config);
     }
+    // cpk run [target]
     if (!strcmp("run", argv[1])) {
         char* target = "dev";
         char** run_argv = &argv[argc];
@@ -82,14 +86,17 @@ int main(int argc, char* argv[]) {
         exit_code = compile_target(target, config);
         if (!exit_code) exit_code = run_target(target, config, run_argv);
     }
+    // cpk install
     if (!strcmp("install", argv[1])) {
         store_init();
         exit_code = install_dependencies(config);
     }
+    // cpk add (name=dep)+
     if (!strcmp("add", argv[1])) {
         store_init();
         exit_code = add_dependencies(argv + 2, config);
     }
+    // cpk remove (name)
     if (!strcmp("remove", argv[1])) {
         if (argc < 3) {
             printf("No dependency name was specified\n");
