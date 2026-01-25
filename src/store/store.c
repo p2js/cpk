@@ -61,6 +61,32 @@ int store_init() {
     return 0;
 }
 
+/**
+ * Helper function to extract the filename from a source URL
+ */
+void store_identifier_extract_url_filename(const char* default_filename, const char* ident_string, store_dependency_identifier* ident) {
+    if (strlen(ident_string) > 2048) {
+        fprintf(stderr, "Error: %s: URL is too long", ident_string);
+        ident->mode = DEPENDENCY_UNKNOWN;
+    } else {
+        strcpy(ident->URL, ident_string);
+        const char* filename = strrchr(ident->URL, '/');
+        if (filename) {
+            filename++;  // Move past the '/'
+        } else {
+            filename = default_filename;
+        }
+
+        if (strlen(ident->path) + strlen(filename) + 2 > 4096) {  // +2 for '/' and 0
+            fprintf(stderr, "Error: Resolved path for %s is too long\n", ident_string);
+            ident->mode = DEPENDENCY_UNKNOWN;
+        } else {
+            strcat(ident->path, "/");
+            strcat(ident->path, filename);
+        }
+    }
+}
+
 store_dependency_identifier store_resolve_identifier(const char* ident_string) {
     store_dependency_identifier ident = {0};
 
@@ -105,58 +131,13 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         strcpy(ident.path, ident_string + 5);
     } else if (!strncmp("web:", ident_string, 4)) {
         ident.mode = DEPENDENCY_WEB;
-        // Simple URL
-        if (strlen(ident_string + 4) > 2048) {
-            fprintf(stderr, "Error: %s: URL is too long", ident_string);
-            ident.mode = DEPENDENCY_UNKNOWN;
-        } else {
-            strcpy(ident.URL, ident_string + 4);
-            // Extract filename from URL
-            const char* filename = strrchr(ident.URL, '/');
-            if (filename) {
-                filename++;  // Move past the '/'
-            } else {
-                filename = "file";  // No slash, use the whole URL as filename
-            }
-
-            if (strlen(ident.path) + strlen(filename) + 2 > 4096) {  // +2 for '/' and 0
-                fprintf(stderr, "Error: Resolved path for %s is too long\n", ident_string);
-                ident.mode = DEPENDENCY_UNKNOWN;
-            } else {
-                strcat(ident.path, "/");
-                strcat(ident.path, filename);
-            }
-        }
+        store_identifier_extract_url_filename("file", ident_string + 4, &ident);
     } else if (!strncmp("zip:", ident_string, 4)) {
         ident.mode = DEPENDENCY_ZIP;
-        // Simple URL
-        if (strlen(ident_string + 4) > 2048) {
-            fprintf(stderr, "Error: %s: URL is too long", ident_string);
-        } else {
-            strcpy(ident.URL, ident_string + 4);
-            const char* filename = strrchr(ident.URL, '/');
-            if (filename) {
-                filename++;  // Move past the '/'
-            } else {
-                filename = "file.zip";  // No slash, use a default filename
-            }
-
-            if (strlen(ident.path) + strlen(filename) + 2 > 4096) {  // +2 for '/' and 0
-                fprintf(stderr, "Error: Resolved path for %s is too long\n", ident_string);
-                ident.mode = DEPENDENCY_UNKNOWN;
-            } else {
-                strcat(ident.path, "/");
-                strcat(ident.path, filename);
-            }
-        }
+        store_identifier_extract_url_filename("file.zip", ident_string + 4, &ident);
     } else if (!strncmp("tar:", ident_string, 4)) {
         ident.mode = DEPENDENCY_TAR;
-        // Simple URL
-        if (strlen(ident_string + 4) > 2048) {
-            fprintf(stderr, "Errpr: %s: URL is too long", ident_string);
-        } else {
-            strcpy(ident.URL, ident_string + 4);
-        }
+        store_identifier_extract_url_filename("file.tar.gz", ident_string + 4, &ident);
     } else {
         fprintf(stderr, "Error: %s does not represent a valid dependency identifier\n", ident_string);
         ident.mode = DEPENDENCY_UNKNOWN;
@@ -172,6 +153,25 @@ int store_curl_dependency(store_dependency_identifier dependency) {
     printf("Downloading %s to %s\n", dependency.URL, dependency.path);
     if (system(curl_command)) {
         fprintf(stderr, "Error downloading dependency from %s\n", dependency.URL);
+        return 1;
+    }
+    return 0;
+}
+
+int store_create_dependency_dir(char* dep_dir, store_dependency_identifier* dependency) {
+    strcpy(dep_dir, dependency->path);
+    char* last_slash = strrchr(dep_dir, '/');
+    if (last_slash != NULL) {
+        *last_slash = 0;  // Null-terminate to get the directory path
+    }
+    if (mkdir(dep_dir, 0700)) {
+        if (errno == EEXIST) {
+            // Dependency directory already exists, do not download, just update dep path
+            strcpy(dependency->path, dep_dir);
+            return EEXIST;
+        }
+        fprintf(stderr, "Error creating dependency directory %s: ", dep_dir);
+        perror("");
         return 1;
     }
     return 0;
@@ -215,48 +215,23 @@ int store_get_dependency(store_dependency_identifier* dependency) {
             break;
         }
         case DEPENDENCY_WEB: {
-            // Create the directory for the dependency
+            // Create the directory for the dependency and download it
             char dep_dir[4096];
-            strcpy(dep_dir, dependency->path);
-            char* last_slash = strrchr(dep_dir, '/');
-            if (last_slash != NULL) {
-                *last_slash = 0;  // Null-terminate to get the directory path
+            exit_code = store_create_dependency_dir(dep_dir, dependency);
+            if (exit_code == EEXIST) {
+                strcpy(dependency->path, dep_dir);
+                return 0;
             }
-            if (mkdir(dep_dir, 0700)) {
-                if (errno == EEXIST) {
-                    // Dependency directory already exist, do not download
-                    strcpy(dependency->path, dep_dir);
-                    return 0;
-                }
-                fprintf(stderr, "Error creating dependency directory %s: ", dep_dir);
-                perror("");
-                return 1;
-            }
-            // curl will download directly to dependency->path
             exit_code = store_curl_dependency(*dependency);
             if (!exit_code) strcpy(dependency->path, dep_dir);
             break;
         }
         case DEPENDENCY_ZIP: {
-            // Create the directory for the dependency
+            // Create the directory for the dependency and download it
             char dep_dir[4096];
-            strcpy(dep_dir, dependency->path);
-            char* last_slash = strrchr(dep_dir, '/');
-            if (last_slash != NULL) {
-                *last_slash = 0;  // Null-terminate to get the directory path
-            }
-            if (mkdir(dep_dir, 0700)) {
-                if (errno == EEXIST) {
-                    // Dependency directory already exist, do not download, just update dep path
-                    strcpy(dependency->path, dep_dir);
-                    return 0;
-                }
-                fprintf(stderr, "Error creating dependency directory %s: ", dep_dir);
-                perror("");
-                return 1;
-            }
-
-            exit_code = store_curl_dependency(*dependency);
+            exit_code = store_create_dependency_dir(dep_dir, dependency);
+            if (exit_code == EEXIST) return 0;
+            exit_code = exit_code || store_curl_dependency(*dependency);
             if (exit_code) break;
 
             // Unzip the downloaded archive
