@@ -137,8 +137,8 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
         strcpy(executable_path, executable_name);
     }
 
-    printf("> %s", executable_path);
-
+    argv[0] = executable_path;
+    putchar('>');
     for (size_t i = 0; argv[i] != NULL; i++) {
         printf(" %s", argv[i]);
     }
