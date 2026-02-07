@@ -18,7 +18,7 @@ Commands for new projects:\n\
 \tcpk help\t\tShow the help menu\n\
 \tcpk ex\t\t\tShow a comprehensive example for cpk.toml\n\
 Commands for project compilation:\n\
-\tcpk compile [target]\trun the compilation command for the target to its output folder (*)\n\
+\tcpk compile [target]\trun the compilation command for the target to its output folder\n\
 \tcpk run [target]\tcpk compile [target], then run the executable\n\
 Commands for project dependency management:\n\
 \tcpk install\t\tInstall and link all the dependencies specified in cpk.toml\n\
@@ -38,7 +38,7 @@ Dependency types:\n\
 const char* TOML_EXAMPLE =
     "Example cpk.toml:\n\
 \n\
-target_dir = \"build\" # Directory for all targets' builds\n\
+target_dir = \"build\" # Directory for all targets' builds, do not include if you don't want output to be moved\n\
 \n\
 [dependencies] # dependencies map names to repositories/files\n\
 CLArgs = \"gh:p2js/clargs\"\n\

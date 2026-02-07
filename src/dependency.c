@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,11 +16,10 @@ int install_dependencies(toml_result_t config) {
     // Remove and recreate .cpk directory
     if (system("rm -r .cpk")) {
         perror("Warning: Could not remove .cpk directory, will install and link dependencies anyway");
-    } else {
-        if (mkdir(".cpk", 0700)) {
-            perror("Error: Could not create cpk directory");
-            return 1;
-        }
+    } 
+    if (mkdir(".cpk", 0700) && errno != EEXIST) {
+        perror("Error: Could not create cpk directory");
+        return 1;
     }
 
     toml_datum_t dependencies_table = toml_get(config.toptab, "dependencies");
