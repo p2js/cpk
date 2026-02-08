@@ -42,9 +42,7 @@ int main(int argc, char* argv[]) {
         printf("Deleting %s from the global dependency store\n", argv[2]);
         store_init();
         store_dependency_identifier ident = store_resolve_identifier(argv[2]);
-        if (!ident.mode) {
-            return 1;
-        }
+        if (!ident.mode) return 1;
         return store_remove_dependency(&ident);
     }
     // cpk update (dep)
@@ -56,9 +54,7 @@ int main(int argc, char* argv[]) {
         printf("Updating %s in the global dependency store\n", argv[2]);
         store_init();
         store_dependency_identifier ident = store_resolve_identifier(argv[2]);
-        if (!ident.mode) {
-            return 1;
-        }
+        if (!ident.mode) return 1;
         return store_update_dependency(&ident);
     }
 

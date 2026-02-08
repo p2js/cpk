@@ -7,7 +7,9 @@
 toml_result_t config_parse() {
     FILE* toml_cpk = fopen("cpk.toml", "r");
     if (!toml_cpk) {
-        fprintf(stderr, "Could not open cpk.toml.\nYou may not have initialised the project (cpk init),\nor your config file was not found in the working directory.\n");
+        fprintf(
+            stderr,
+            "Could not open cpk.toml.\nYou may not have initialised the project (cpk init),\nor your config file was not found in the working directory.\n");
         exit(1);
     }
     toml_result_t config = toml_parse_file(toml_cpk);

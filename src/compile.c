@@ -26,9 +26,7 @@ int compile_target(char* target, toml_result_t config) {
     if (toml_target_dir.type != TOML_STRING) {
         fprintf(stderr, "Info: cpk.toml: target_dir not defined, using current directory\n");
     }
-    const char* target_dir = toml_target_dir.type == TOML_STRING
-                                 ? toml_target_dir.u.str.ptr
-                                 : NULL;
+    const char* target_dir = toml_target_dir.type == TOML_STRING ? toml_target_dir.u.str.ptr : NULL;
     int target_dir_len = toml_target_dir.type == TOML_STRING ? toml_target_dir.u.str.len : 0;
 
     char dirpath[4096];
@@ -63,7 +61,8 @@ int compile_target(char* target, toml_result_t config) {
     // Compile code using the build script
     toml_datum_t toml_target_build = toml_get(toml_target, "build");
     if (toml_target_build.type != TOML_STRING) {
-        fprintf(stderr, "Error: cpk.toml: target %s does not provide a build command string", target);
+        fprintf(stderr, "Error: cpk.toml: target %s does not provide a build command string",
+                target);
         return 1;
     }
     const char* build_command = toml_target_build.u.str.ptr;
@@ -128,11 +127,8 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
     const char* executable_name = target_ex.u.str.ptr;
     toml_datum_t toml_target_dir = toml_get(config.toptab, "target_dir");
     if (toml_target_dir.type == TOML_STRING) {
-        snprintf(executable_path, 4096,
-            "%s/%s/%s",
-            toml_target_dir.u.str.ptr,
-            target,
-            executable_name);
+        snprintf(executable_path, 4096, "%s/%s/%s", toml_target_dir.u.str.ptr, target,
+                 executable_name);
     } else {
         strcpy(executable_path, executable_name);
     }

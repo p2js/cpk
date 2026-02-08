@@ -19,7 +19,8 @@ void snapshot_init(dir_snapshot* snapshot) {
 }
 void snapshot_add(dir_snapshot* snapshot, const char* path) {
     if (snapshot->count == snapshot->capacity) {
-        snapshot->capacity = snapshot->capacity ? snapshot->capacity * 2 : SNAPSHOT_STARTING_CAPACITY;
+        snapshot->capacity =
+            snapshot->capacity ? snapshot->capacity * 2 : SNAPSHOT_STARTING_CAPACITY;
         snapshot->paths = realloc(snapshot->paths, snapshot->capacity * sizeof(char*));
     }
     snapshot->paths[snapshot->count++] = strdup(path);

@@ -15,8 +15,9 @@
 int install_dependencies(toml_result_t config) {
     // Remove and recreate .cpk directory
     if (system("rm -r .cpk")) {
-        perror("Warning: Could not remove .cpk directory, will install and link dependencies anyway");
-    } 
+        perror(
+            "Warning: Could not remove .cpk directory, will install and link dependencies anyway");
+    }
     if (mkdir(".cpk", 0700) && errno != EEXIST) {
         perror("Error: Could not create cpk directory");
         return 1;
@@ -32,13 +33,17 @@ int install_dependencies(toml_result_t config) {
         const char* dependency_key = dependencies_table.u.tab.key[i];
         toml_datum_t dependency_value = dependencies_table.u.tab.value[i];
         if (dependency_value.type != TOML_STRING) {
-            fprintf(stderr, "ERROR: cpk.toml: dependency path for %s is not a string\n", dependency_key);
+            fprintf(stderr, "ERROR: cpk.toml: dependency path for %s is not a string\n",
+                    dependency_key);
             exit_code = 1;
             continue;
         }
-        printf("\e[1m(%d/%d)\e[0m Installing and linking %s from %s...\n", i + 1, dependencies_table.u.tab.size, dependency_key, dependency_value.u.str.ptr);
-        store_dependency_identifier identifier = store_resolve_identifier(dependency_value.u.str.ptr);
-        if (!identifier.mode || store_get_dependency(&identifier) || store_create_symlink(&identifier, dependency_key)) {
+        printf("\e[1m(%d/%d)\e[0m Installing and linking %s from %s...\n", i + 1,
+               dependencies_table.u.tab.size, dependency_key, dependency_value.u.str.ptr);
+        store_dependency_identifier identifier =
+            store_resolve_identifier(dependency_value.u.str.ptr);
+        if (!identifier.mode || store_get_dependency(&identifier) ||
+            store_create_symlink(&identifier, dependency_key)) {
             exit_code = 1;
             continue;
         }
@@ -111,17 +116,18 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
             size_t dependency_key_len = deps.u.tab.len[i];
             toml_datum_t dependency_val = deps.u.tab.value[i];
             if (dependency_val.type != TOML_STRING) {
-                fprintf(stderr, "Warning: dependency '%s' is not a string, removing from cpk.toml\n", dependency_key);
+                fprintf(stderr,
+                        "Warning: dependency '%s' is not a string, removing from cpk.toml\n",
+                        dependency_key);
                 continue;
             }
 
-            size_t space_needed = dependency_key_len + dependency_val.u.str.len + 6;  // key = "val"\n
+            size_t space_needed =
+                dependency_key_len + dependency_val.u.str.len + 6;  // key = "val"\n
             dep_string_ensure_space(dep_string, space_needed);
 
-            dep_string.len += sprintf(dep_string.ptr + dep_string.len,
-                "%s = \"%s\"\n",
-                dependency_key,
-                dependency_val.u.str.ptr);
+            dep_string.len += sprintf(dep_string.ptr + dep_string.len, "%s = \"%s\"\n",
+                                      dependency_key, dependency_val.u.str.ptr);
         }
     }
 
@@ -129,7 +135,10 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
     for (size_t i = 0; new_dependencies[i] != NULL; i++) {
         char* dep_equals = strchr(new_dependencies[i], '=');
         if (!dep_equals) {
-            fprintf(stderr, "Error parsing dependency \"%s\": No equals sign separating local name from dependency value\nThis dependency will be skipped.\n", new_dependencies[i]);
+            fprintf(
+                stderr,
+                "Error parsing dependency \"%s\": No equals sign separating local name from dependency value\nThis dependency will be skipped.\n",
+                new_dependencies[i]);
             continue;
         }
 
@@ -137,18 +146,27 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
         size_t key_len = dep_equals - new_dependencies[i];
         char dependency_key[256];
         if (key_len == 0) {
-            fprintf(stderr, "Error: Dependency name not provided in \"%s\".\nThis dependency will be skipped.\n", new_dependencies[i]);
+            fprintf(
+                stderr,
+                "Error: Dependency name not provided in \"%s\".\nThis dependency will be skipped.\n",
+                new_dependencies[i]);
             continue;
         }
         if (key_len >= sizeof(dependency_key)) {
-            fprintf(stderr, "Error: dependency name \"%s\"is too long (max 256 characters)\nThis dependency will be skipped.\n", new_dependencies[i]);
+            fprintf(
+                stderr,
+                "Error: dependency name \"%s\"is too long (max 256 characters)\nThis dependency will be skipped.\n",
+                new_dependencies[i]);
             continue;
         }
         memcpy(dependency_key, new_dependencies[i], key_len);
         dependency_key[key_len] = 0;
         const char* dependency_value = dep_equals + 1;
         if (dependency_value[0] == 0) {
-            fprintf(stderr, "Error, Dependency value not provided in \"%s\".\nThis dependency will be skipped.\n", new_dependencies[i]);
+            fprintf(
+                stderr,
+                "Error, Dependency value not provided in \"%s\".\nThis dependency will be skipped.\n",
+                new_dependencies[i]);
             continue;
         }
 
@@ -160,7 +178,8 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
             const char* newline = strchr(p, '\n');
             size_t len = newline ? (size_t)(newline - p) : strlen(p);
             // check if line starts with 'key ='
-            if (len > key_len + 3 && strncmp(line_start, dependency_key, key_len) == 0 && line_start[key_len] == ' ' && line_start[key_len + 1] == '=') {
+            if (len > key_len + 3 && strncmp(line_start, dependency_key, key_len) == 0 &&
+                line_start[key_len] == ' ' && line_start[key_len + 1] == '=') {
                 duplicate = true;
                 break;
             }
@@ -169,7 +188,9 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
         }
 
         if (duplicate) {
-            fprintf(stderr, "Error adding dependency \"%1$s\": Dependency name \"%2$s\" was already defined in cpk.toml or another argument.\nIf you intended to replace it, please run \"cpk remove %2$s\" first.\nThis dependency will be skipped.\n",
+            fprintf(
+                stderr,
+                "Error adding dependency \"%1$s\": Dependency name \"%2$s\" was already defined in cpk.toml or another argument.\nIf you intended to replace it, please run \"cpk remove %2$s\" first.\nThis dependency will be skipped.\n",
                 new_dependencies[i], dependency_key);
             continue;
         }
@@ -182,13 +203,13 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
             continue;
         }
         store_get_dependency(&identifier) || store_create_symlink(&identifier, dependency_key);
-        size_t space_needed = key_len + strlen(dependency_value) + 7;  // key = "val"\n, plus an extra space for a null-terminator if at end
+        size_t space_needed =
+            key_len + strlen(dependency_value) +
+            7;  // key = "val"\n, plus an extra space for a null-terminator if at end
 
         dep_string_ensure_space(dep_string, space_needed);
-        dep_string.len += sprintf(dep_string.ptr + dep_string.len,
-            "%s = \"%s\"\n",
-            dependency_key,
-            dependency_value);
+        dep_string.len += sprintf(dep_string.ptr + dep_string.len, "%s = \"%s\"\n", dependency_key,
+                                  dependency_value);
     }
     // Write the updated dependencies into cpk.toml
     return dep_string_write(dep_string);
@@ -213,23 +234,25 @@ int remove_dependency(char* dependency, toml_result_t config) {
             size_t dependency_key_len = deps.u.tab.len[i];
             toml_datum_t dependency_val = deps.u.tab.value[i];
             if (dependency_val.type != TOML_STRING) {
-                fprintf(stderr, "Warning: dependency '%s' is not a string, removing from cpk.toml\n", dependency_key);
+                fprintf(stderr,
+                        "Warning: dependency '%s' is not a string, removing from cpk.toml\n",
+                        dependency_key);
                 continue;
             }
             if (!strcmp(dependency_key, dependency)) {
                 removed = true;
                 continue;
             }
-            size_t space_needed = dependency_key_len + dependency_val.u.str.len + 6;  // key = "val"\n
+            size_t space_needed =
+                dependency_key_len + dependency_val.u.str.len + 6;  // key = "val"\n
             dep_string_ensure_space(dep_string, space_needed);
-            dep_string.len += sprintf(dep_string.ptr + dep_string.len,
-                "%s = \"%s\"\n",
-                dependency_key,
-                dependency_val.u.str.ptr);
+            dep_string.len += sprintf(dep_string.ptr + dep_string.len, "%s = \"%s\"\n",
+                                      dependency_key, dependency_val.u.str.ptr);
         }
     }
     if (!removed) {
-        fprintf(stderr, "Error: Could not remove dependency \"%s\": Not found in cpk.toml\n", dependency);
+        fprintf(stderr, "Error: Could not remove dependency \"%s\": Not found in cpk.toml\n",
+                dependency);
         return 1;
     }
     // Otherwise unlink the dependency and rewrite the new dependency string
