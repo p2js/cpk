@@ -1,3 +1,6 @@
+#ifndef _CPK_RMDIR_H
+#define _CPK_RMDIR_H
+
 #include <stdbool.h>
 
 /**
@@ -7,3 +10,5 @@
  * directories to recursively remove
  */
 int rmdir_r(const char* path, bool unlink_symlinks);
+
+#endif

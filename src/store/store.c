@@ -19,14 +19,6 @@
 
 const char* GITHUB_URL = "https://github.com/";
 
-/*
- * Should have:
- * - A function for parsing/resolving dependency identifiers
- * - A function for downloading a dependency
- * - A function for removing a dependency
- * - A function for updating a dependency
- */
-
 static char store_dir[4096];
 
 /**

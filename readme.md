@@ -47,11 +47,11 @@ There are 6 types of dependencies, each handled differently by cpk:
 - `gh:(repo)[::path]` represents a GitHub repository, optionally checking out `path`.
 - `web:(URL)` represents a single source file hosted at URL.
 - `zip:(URL)` represents a `.zip` archive hosted at URL.
-- `tar:(URL)` represents a `.tar.gz` tarball hosted at URL.
 - `file:(path)` represents a local directory or file. These dependencies will be linked directly rather than copied to the global dependency store.
 
 
 > `git:` and `gh:` dependency types will require that cpk have access to the `git` shell command.
+> `web:` and `zip:` dependency types will require that cpk have access to the `curl` shell command.
 
 #### Referencing dependencies
 

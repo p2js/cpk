@@ -30,9 +30,8 @@ Commands for dependency store management:\n\
 Dependency types:\n\
 \tgh:(repo)[::path]\tGitHub repository, optionally checking out path     (requires git command)\n\
 \tgit:(URL)[::path]\tGit repository at URL, optionally checking out path (requires git command)\n\
-\tweb:(URL)\t\tSingle source file hosted at URL\n\
-\tzip:(URL)\t\t.zip archive hosted at URL\n\
-\ttar:(URL)\t\t.tar.gz tarball hosted at URL\n\
+\tweb:(URL)\t\tSingle source file hosted at URL (requires curl command)\n\
+\tzip:(URL)\t\t.zip archive hosted at URL       (requires curl command)\n\
 \tfile:(path)\t\tLocal file/directory (absolute path or relative from .cpk directory, ie add a ../)";
 
 const char* TOML_EXAMPLE =
