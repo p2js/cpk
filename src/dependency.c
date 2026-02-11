@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "dir/rmdir_recursive.h"
 #include "store/store.h"
 #include "toml/config.h"
 #include "tomlc17/src/tomlc17.h"
@@ -14,7 +15,7 @@
  */
 int install_dependencies(toml_result_t config) {
     // Remove and recreate .cpk directory
-    if (system("rm -r .cpk")) {
+    if (rmdir_r(".cpk", true)) {
         perror(
             "Warning: Could not remove .cpk directory, will install and link dependencies anyway");
     }

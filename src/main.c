@@ -2,12 +2,14 @@
 
 #include "compile.c"
 #include "dependency.c"
+#include "dir/rmdir_recursive.c"
 #include "dir/snapshot.c"
 #include "help.c"
 #include "init.c"
 #include "store/store.c"
 #include "store/store.h"
 #include "toml/config.c"
+
 // Dependencies
 #include "miniz/miniz.c"
 #include "tomlc17/src/tomlc17.c"

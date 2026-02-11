@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "../dir/rmdir_recursive.h"
 #include "../dir/snapshot.h"
 #include "miniz/miniz.h"
 #include "xxHash/xxhash.h"
@@ -363,9 +364,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
 }
 
 int store_remove_dependency(store_dependency_identifier* dependency) {
-    char rm_command[4096 + 27] = "rm -r --interactive=never ";
-    strcat(rm_command, dependency->path);
-    return system(rm_command);
+    return rmdir_r(dependency->path, false);
 }
 
 int store_update_dependency(store_dependency_identifier* dependency) {
