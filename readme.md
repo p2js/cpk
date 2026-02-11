@@ -1,6 +1,6 @@
 # cpk
 
-A simple dependency manager and project runner for C, designed around unity builds and inspired by Rust's (cargo)[https://github.com/rust-lang/cargo].
+A simple dependency manager and project runner for C, designed around unity builds and inspired by Rust's [cargo](https://github.com/rust-lang/cargo).
 
 ## Installation
 
