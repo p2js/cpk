@@ -17,3 +17,8 @@ release = {
     build = "clang src/main.c -O3 -I.cpk -o cpk",
     ex = "cpk"
 }
+
+static-musl = {
+    build = "musl-gcc -static -O3 -I.cpk -o cpk"
+    ex = "cpk"
+}
