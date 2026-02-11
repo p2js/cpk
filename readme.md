@@ -1,10 +1,20 @@
 # cpk
 
-WIP Simple dependency manager and project runner for C, designed around unity builds.
+A simple dependency manager and project runner for C, designed around unity builds and inspired by Rust's (cargo)[https://github.com/rust-lang/cargo].
 
 ## Installation
 
-TODO
+cpk is currently for Linux only.
+
+Simply download a release of cpk from the releases tab according to your needs, then install it to be able to use it from anywhere:
+
+```sh
+unzip cpk.zip # or cpk-static-musl.zip
+chmod +x cpk
+sudo mv cpk /usr/local/bin/cpk
+```
+
+> Most users on most standard Linux distributions (Ubuntu, Debian, Fedora, Arch and any other glibc-based distro) can use the regular `cpk.zip` release. However, use `cpk-static-musl.zip` if you need a statically compiled executable that will work anywhere. 
 
 ## Usage
 
@@ -42,7 +52,7 @@ The same dependency can be used in different projects (even under different name
 
 #### Dependency types
 
-There are 6 types of dependencies, each handled differently by cpk:
+There are 5 types of dependencies, each handled differently:
 - `git:(URL)[::path]` represents a git repository hosted at URL, optionally checking out `path`.
 - `gh:(repo)[::path]` represents a GitHub repository, optionally checking out `path`.
 - `web:(URL)` represents a single source file hosted at URL.
@@ -59,7 +69,7 @@ After installing and linking dependencies, you can simply include their source f
 
 #### Managing the global dependency store
 
-to reinstall or delete a dependency from cpk's global store, use `cpk update (dep)` and `cpk delete (dep)` repsectively, using the dependency values outlined above.
+to reinstall or delete a dependency from cpk's global store, use `cpk update (dep)` and `cpk delete (dep)` respectively, using the dependency values outlined above.
 
 ### cpk as a project runner
 
@@ -70,3 +80,13 @@ New targets can be defined in the `[targets]` table of `cpk.toml`. Each target h
 Running `cpk compile [name]` will invoke your build command, and `cpk run [name] [...args]` will both invoke the build command and execute the file defined, forwarding any arguments given after the target name. All files produced by your build command will be moved to `target_dir/name`, where `target_dir` is the main output directory defined at the top of `cpk.toml`.
 
 Using either command with no arguments will use the `dev` target. If `target_dir` is not defined, the output files will not be moved.
+
+## Why unity builds?
+
+See: [one file is better than cmake](https://www.youtube.com/watch?v=j3BvierE2hM)
+
+Not convinced? See: [one file is still better than cmake](https://www.youtube.com/watch?v=Cgc4LKmjm_c)
+
+Unity builds allow for faster compilation and a much simpler project structure, which is the reason cpk can even work with this level of simplicity in the first place: No extra specification of build commands/processes, no including each library separately in your build command.
+
+Should you still not be convinced, there exist other dependency management alternatives for you (See [meson](https://mesonbuild.com/)).
