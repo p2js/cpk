@@ -19,6 +19,6 @@ release = {
 }
 
 static-musl = {
-    build = "musl-gcc -static -O3 -I.cpk -o cpk"
+    build = "musl-gcc -static -O3 -I.cpk -o cpk",
     ex = "cpk"
 }
