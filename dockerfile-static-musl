@@ -1,0 +1,22 @@
+# Dockerfile for building a static binary of cpk using musl libc
+# This requires a tarball of the .cpk directory due to docker not copying symlinks.
+# run the following command to build the image and extract the binary:
+
+# tar -chf cpk.tar .cpk; docker cp $(docker create $(docker build -f dockerfile-static-musl -q .)):/cpk-static-musl .
+
+FROM alpine:latest AS build
+RUN apk add --no-cache build-base musl-dev
+
+WORKDIR /src
+
+COPY . .
+COPY cpk.tar /src/
+
+RUN rm -rf .cpk
+RUN tar -xf cpk.tar && rm cpk.tar
+
+RUN gcc -static -O3 -I.cpk src/main.c -o cpk-static-musl
+
+FROM scratch AS export
+COPY --from=build /src/cpk-static-musl /
+CMD ["cpk-static-musl"]
