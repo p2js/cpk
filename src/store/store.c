@@ -261,14 +261,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
                     break;
                 }
 
-                // Create parent directories for the file
-                char path_copy[4096];
-                strcpy(path_copy, file_stat.m_filename);
-                char* last_slash_in_path = strrchr(path_copy, '/');
-                if (last_slash_in_path) {
-                    *last_slash_in_path = '\0';  // Null-terminate to get the directory part
-                    mk_subdirectories(path_copy);
-                }
+                create_parent_directories(file_stat.m_filename);
 
                 if (!mz_zip_reader_is_file_a_directory(&zip_archive, i)) {
                     if (!mz_zip_reader_extract_to_file(&zip_archive, i, file_stat.m_filename, 0)) {

@@ -69,9 +69,15 @@ dir_snapshot diff_snapshots(dir_snapshot* before, dir_snapshot* after) {
     return diff;
 }
 
-void mk_subdirectories(const char* path) {
+void create_parent_directories(const char* path) {
     char temp[4096];
     strcpy(temp, path);
+
+    // Truncate to parent directory
+    char* last = strrchr(temp, '/');
+    if (!last) return;
+    *last = '\0';
+
     for (char* ptr = temp + 1; *ptr; ptr++) {
         if (*ptr == '/') {
             *ptr = '\0';
@@ -88,7 +94,7 @@ void move_snapshot_diff_items(dir_snapshot* diff, const char* root, const char* 
         char dst[4096];
         snprintf(src, sizeof(src), "%s/%s", root, diff->paths[i]);
         snprintf(dst, sizeof(dst), "%s/%s", target, diff->paths[i]);
-        mk_subdirectories(dst);
+        create_parent_directories(dst);
         rename(src, dst);
     }
 }

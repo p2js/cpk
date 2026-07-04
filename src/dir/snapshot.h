@@ -39,6 +39,6 @@ void move_snapshot_diff_items(dir_snapshot* diff, const char* root, const char* 
  */
 void snapshot_free(dir_snapshot* snapshot);
 
-void mk_subdirectories(const char* path);
+void create_parent_directories(const char* path);
 
 #endif
