@@ -108,7 +108,14 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
     } else if (!strncmp("file:", ident_string, 5)) {
         // Local file on disk
         ident.mode = DEPENDENCY_FILE;
-        strcpy(ident.path, ident_string + 5);
+        const char* path = ident_string + 5;
+        size_t path_offset = 0;
+        // add ../ to relative paths (since paths are relative from .cpk)
+        if (path[0] != '/') {
+            path_offset += 3;
+            strcpy(ident.path, "../");
+        }
+        strncpy(ident.path + path_offset, ident_string + 5, 4096 - path_offset);
     } else if (!strncmp("web:", ident_string, 4)) {
         ident.mode = DEPENDENCY_WEB;
         store_identifier_extract_url_filename("file", ident_string + 4, &ident);

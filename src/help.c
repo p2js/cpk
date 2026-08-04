@@ -32,7 +32,7 @@ Dependency types:\n\
 \tgit:(URL)[::path]\tGit repository at URL, optionally checking out path (requires git command)\n\
 \tweb:(URL)\t\tSingle source file hosted at URL (requires curl command)\n\
 \tzip:(URL)\t\t.zip archive hosted at URL       (requires curl command)\n\
-\tfile:(path)\t\tLocal file/directory (absolute path or relative from .cpk directory, ie add a ../)";
+\tfile:(path)\t\tLocal file/directory";
 
 const char* TOML_EXAMPLE =
     "Example cpk.toml:\n\
