@@ -3,7 +3,6 @@
 typedef enum {
     INIT,
     HELP,
-    EX,
     COMPILE,
     RUN,
     INSTALL,
@@ -29,33 +28,15 @@ Commands for dependency store management:\n\
 \tcpk update (dep)\tUpdate/reinstall a dependency in the global store\n\
 \tcpk delete (dep)\tRemove a dependency from the global store\n\
 Dependency types:\n\
-\tgit:(URL)[::path]\tGit repository at URL, optionally checking out path (requires git command)\n\
+\tgit:(repo)[::path]\tGit repository to clone from repo, optionally checking out path (requires git command)\n\
 \tweb:(URL)\t\tSingle source file hosted at URL (requires curl command)\n\
 \tzip:(URL)\t\t.zip archive hosted at URL       (requires curl command)\n\
 \tfile:(path)\t\tLocal file/directory";
-
-const char* TOML_EXAMPLE =
-    "Example cpk.toml:\n\
-\n\
-target_dir = \"build\" # Directory for all targets' builds, do not include if you don't want output to be moved\n\
-\n\
-[dependencies] # dependencies map names to repositories/files\n\
-CLArgs = \"git:https://github.com/p2js/clargs.git\"\n\
-\n\
-[target.dev]\n\
-# targets map target names to build commands (for use with cpk run/compile)\n\
-# all files produced by the build command in the project folder will be output to target_dir/target_name\n\
-# dev is the default profile used by compile/run when called without args\n\
-build = \"clang $CFLAGS src/main.c src/debug.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
-exec = \"a.out\" # Executable path to be used by cpk run (in target dir)\"\n";
 
 void help_show(HelpCommand cmd) {
     switch (cmd) {
         case HELP:
             printf("%s\n", HELP_MENU);
-            break;
-        case EX:
-            printf("%s\n", TOML_EXAMPLE);
             break;
         default:
             printf("Unimplemented\n");

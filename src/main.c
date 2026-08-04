@@ -28,11 +28,6 @@ int main(int argc, char* argv[]) {
         help_show(HELP);
         return 0;
     }
-    // cpk ex
-    if (!strcmp("ex", argv[1])) {
-        help_show(EX);
-        return 0;
-    }
     // cpk init [dir]
     if (!strcmp("init", argv[1])) {
         char* init_dir = argc >= 3 ? argv[2] : ".";
