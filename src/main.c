@@ -63,11 +63,16 @@ int main(int argc, char* argv[]) {
     // The next options all require parsing configuration
     toml_result_t config = config_parse();
     int exit_code = -1;
-    // cpk compile [target]
+    // cpk compile target*
     if (!strcmp("compile", argv[1])) {
-        char* target = argc >= 3 ? argv[2] : "dev";
-        printf("Compiling target %s\n", target);
-        exit_code = compile_target(target, config);
+        char* default_target[] = {"dev", NULL};
+        char** targets = argc >= 3 ? argv + 2 : default_target;
+        for (int i = 0; targets[i] != NULL; i++) {
+            printf("Compiling target %s\n", targets[i]);
+            int compile_exit_code = compile_target(targets[i], config);
+            if (compile_exit_code) exit_code = 1;
+        }
+        if (exit_code == -1) exit_code = 0;
     }
     // cpk run [target]
     if (!strcmp("run", argv[1])) {

@@ -61,7 +61,7 @@ int compile_target(char* target, toml_result_t config) {
     // Compile code using the build script
     toml_datum_t toml_target_build = toml_get(toml_target, "build");
     if (toml_target_build.type != TOML_STRING) {
-        fprintf(stderr, "ERROR: cpk.toml: target %s does not provide a build command string",
+        fprintf(stderr, "ERROR: cpk.toml: target %s does not provide a build command string\n",
                 target);
         return 1;
     }
