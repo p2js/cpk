@@ -30,7 +30,7 @@ int config_write_dependencies(char* dependencies_block) {
     // read entire cpk.toml
     FILE* f = fopen("cpk.toml", "r");
     if (!f) {
-        perror("Error: Could not open cpk.toml for reading");
+        perror("ERROR: Could not open cpk.toml for reading");
         return 1;
     }
 
@@ -73,7 +73,7 @@ int config_write_dependencies(char* dependencies_block) {
         // not found, append at end
         FILE* out = fopen("cpk.toml", "a");
         if (!out) {
-            perror("Error: Could not open cpk.toml for appending");
+            perror("ERROR: Could not open cpk.toml for appending");
             free(file);
             return 1;
         }
@@ -118,7 +118,7 @@ int config_write_dependencies(char* dependencies_block) {
     // write back to file
     FILE* out = fopen("cpk.toml", "w");
     if (!out) {
-        perror("Error: Could not open cpk.toml for writing");
+        perror("ERROR: Could not open cpk.toml for writing");
         free(file);
         free(new_file);
         return 1;

@@ -51,7 +51,7 @@ int init_project(char* directory) {
 
     size_t path_length = strlen(directory);
     if (path_length > 4096 - 12) {
-        fprintf(stderr, "Error: Path too long");
+        fprintf(stderr, "ERROR: Path too long");
         return 1;
     }
 
@@ -67,7 +67,7 @@ int init_project(char* directory) {
 
     FILE* fp_cpk_toml = fopen(current_filename, "wx");
     if (!fp_cpk_toml) {
-        fprintf(stderr, "Error: %s could not be created: ", current_filename);
+        fprintf(stderr, "ERROR: %s could not be created: ", current_filename);
         perror("");
         return 1;
     }
@@ -79,7 +79,7 @@ int init_project(char* directory) {
     if (mkdir(current_filename, 0700)) {
         if (errno == EEXIST) {
             printf(
-                "Warning: %1$s/build file or directory already exists.\n[WARN] If this is not intended to be the destination for your project's output targets, change %1$s/cpk.toml and %1$s/.gitignore accordingly.\n",
+                "WARNING: %1$s/build file or directory already exists.\n\tIf this is not intended to be the destination for your project's output targets, change %1$s/cpk.toml and %1$s/.gitignore accordingly.\n",
                 directory);
         } else {
             perror("Could not initialise build directory");
@@ -95,7 +95,7 @@ int init_project(char* directory) {
         if (errno == EEXIST) {
             src_exists = true;
             printf(
-                "Info: %s file or directory already exists, example main.c will not be created\n",
+                "INFO: %s file or directory already exists, example main.c will not be created\n",
                 current_filename);
         } else {
             perror("Could not initialise src directory");
@@ -108,7 +108,7 @@ int init_project(char* directory) {
         strcat(current_filename, "/main.c");
         FILE* fp_main_c = fopen(current_filename, "w");
         if (!fp_main_c) {
-            fprintf(stderr, "Error: %s could not be created: ", current_filename);
+            fprintf(stderr, "ERROR: %s could not be created: ", current_filename);
             perror("");
             return 1;
         }
@@ -120,7 +120,7 @@ int init_project(char* directory) {
     strcpy(current_filename + path_length, "/.gitignore");
     FILE* fp_gitignore = fopen(current_filename, "a");
     if (!fp_gitignore) {
-        fprintf(stderr, "Error: %s could not be created or opened: ", current_filename);
+        fprintf(stderr, "ERROR: %s could not be created or opened: ", current_filename);
         perror("");
         return 1;
     }
@@ -131,10 +131,10 @@ int init_project(char* directory) {
     strcpy(current_filename + path_length, "/.cpk");
     if (mkdir(current_filename, 0700)) {
         if (errno == EEXIST) {
-            printf("Info: %s already exists, you may want to rerun cpk install\n",
+            printf("INFO: %s already exists, you may want to rerun cpk install\n",
                    current_filename);
         } else {
-            fprintf(stderr, "Error: %s could not be created: ", current_filename);
+            fprintf(stderr, "ERROR: %s could not be created: ", current_filename);
             perror("");
             return 1;
         }
@@ -142,11 +142,11 @@ int init_project(char* directory) {
 
     if (src_exists) {
         printf(
-            "Project initialised. Start by editing %s/cpk.toml configuration to fit your project.\n",
+            "\nProject initialised. Start by editing %s/cpk.toml configuration to fit your project.\n",
             directory);
     } else {
         printf(
-            "Project initialised. Start by editing %1$s/src/main.c and use \"cpk compile\" to build the project,\nOr edit %1$s/cpk.toml as necessary.\n",
+            "\nProject initialised. Start by editing %1$s/src/main.c and use \"cpk compile\" to build the project,\nOr edit %1$s/cpk.toml as necessary.\n",
             directory);
     }
     return 0;

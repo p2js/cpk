@@ -17,16 +17,16 @@ int install_dependencies(toml_result_t config) {
     // Remove and recreate .cpk directory
     if (rmdir_r(".cpk", true)) {
         perror(
-            "Warning: Could not remove .cpk directory, will install and link dependencies anyway");
+            "WARNING: Could not remove .cpk directory, will install and link dependencies anyway");
     }
     if (mkdir(".cpk", 0700) && errno != EEXIST) {
-        perror("Error: Could not create cpk directory");
+        perror("ERROR: Could not create cpk directory");
         return 1;
     }
 
     toml_datum_t dependencies_table = toml_get(config.toptab, "dependencies");
     if (dependencies_table.type != TOML_TABLE) {
-        fprintf(stderr, "Error: cpk.toml: dependencies table not found");
+        fprintf(stderr, "ERROR: cpk.toml: dependencies table not found");
         return 1;
     }
     int exit_code = 0;
@@ -64,7 +64,7 @@ typedef struct {
 dep_string dep_string_new(size_t starting_cap) {
     char* ptr = malloc(starting_cap);
     if (!ptr) {
-        fprintf(stderr, "Error: out of memory\n");
+        fprintf(stderr, "ERROR: out of memory\n");
         exit(1);
     }
     dep_string out = {
@@ -103,7 +103,7 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
     toml_datum_t deps = toml_get(config.toptab, "dependencies");
 
     if (deps.type != TOML_TABLE && deps.type != TOML_UNKNOWN) {
-        fprintf(stderr, "Error: cpk.toml: dependencies is not defined as a valid table");
+        fprintf(stderr, "ERROR: cpk.toml: dependencies is not defined as a valid table");
         return 1;
     }
 
@@ -118,7 +118,7 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
             toml_datum_t dependency_val = deps.u.tab.value[i];
             if (dependency_val.type != TOML_STRING) {
                 fprintf(stderr,
-                        "Warning: dependency '%s' is not a string, removing from cpk.toml\n",
+                        "WARNING: dependency '%s' is not a string, removing from cpk.toml\n",
                         dependency_key);
                 continue;
             }
@@ -149,14 +149,14 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
         if (key_len == 0) {
             fprintf(
                 stderr,
-                "Error: Dependency name not provided in \"%s\".\nThis dependency will be skipped.\n",
+                "ERROR: Dependency name not provided in \"%s\".\nThis dependency will be skipped.\n",
                 new_dependencies[i]);
             continue;
         }
         if (key_len >= sizeof(dependency_key)) {
             fprintf(
                 stderr,
-                "Error: dependency name \"%s\"is too long (max 256 characters)\nThis dependency will be skipped.\n",
+                "ERROR: dependency name \"%s\"is too long (max 256 characters)\nThis dependency will be skipped.\n",
                 new_dependencies[i]);
             continue;
         }
@@ -223,7 +223,7 @@ int remove_dependency(char* dependency, toml_result_t config) {
     toml_datum_t deps = toml_get(config.toptab, "dependencies");
 
     if (deps.type != TOML_TABLE) {
-        fprintf(stderr, "Error: cpk.toml: dependencies is not defined as a valid table");
+        fprintf(stderr, "ERROR: cpk.toml: dependencies is not defined as a valid table");
         return 1;
     }
     dep_string dep_string = dep_string_new(4096);
@@ -236,7 +236,7 @@ int remove_dependency(char* dependency, toml_result_t config) {
             toml_datum_t dependency_val = deps.u.tab.value[i];
             if (dependency_val.type != TOML_STRING) {
                 fprintf(stderr,
-                        "Warning: dependency '%s' is not a string, removing from cpk.toml\n",
+                        "WARNING: dependency '%s' is not a string, removing from cpk.toml\n",
                         dependency_key);
                 continue;
             }
@@ -252,7 +252,7 @@ int remove_dependency(char* dependency, toml_result_t config) {
         }
     }
     if (!removed) {
-        fprintf(stderr, "Error: Could not remove dependency \"%s\": Not found in cpk.toml\n",
+        fprintf(stderr, "ERROR: Could not remove dependency \"%s\": Not found in cpk.toml\n",
                 dependency);
         return 1;
     }

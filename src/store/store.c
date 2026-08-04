@@ -32,7 +32,7 @@ int store_init() {
     if (xdg_cache_home) {
         if (strlen(xdg_cache_home) + 6 > 4096) {
             fprintf(stderr,
-                    "Error: Could not initialise dependency store, "
+                    "ERROR: Could not initialise dependency store, "
                     "XDG_CACHE_HOME path is too long");
         }
         strcpy(store_dir, xdg_cache_home);
@@ -40,12 +40,12 @@ int store_init() {
     } else {
         char* home = getenv("HOME");
         if (!home) {
-            fprintf(stderr, "Error: Could not initialise dependency store, HOME is not set");
+            fprintf(stderr, "ERROR: Could not initialise dependency store, HOME is not set");
             return 1;
         }
         if (strlen(home) + 13 > 4096) {
             fprintf(stderr,
-                    "Error: Could not initialise dependency store, HOME path "
+                    "ERROR: Could not initialise dependency store, HOME path "
                     "is too long");
         }
         strcpy(store_dir, getenv("HOME"));
@@ -66,7 +66,7 @@ void store_identifier_extract_url_filename(const char* default_filename,
                                            const char* ident_string,
                                            store_dependency_identifier* ident) {
     if (strlen(ident_string) > 2048) {
-        fprintf(stderr, "Error: %s: URL is too long", ident_string);
+        fprintf(stderr, "ERROR: %s: URL is too long", ident_string);
         ident->mode = DEPENDENCY_UNKNOWN;
     } else {
         strcpy(ident->URL, ident_string);
@@ -78,7 +78,7 @@ void store_identifier_extract_url_filename(const char* default_filename,
         }
 
         if (strlen(ident->path) + strlen(filename) + 2 > 4096) {  // +2 for '/' and 0
-            fprintf(stderr, "Error: Resolved path for %s is too long\n", ident_string);
+            fprintf(stderr, "ERROR: Resolved path for %s is too long\n", ident_string);
             ident->mode = DEPENDENCY_UNKNOWN;
         } else {
             strcat(ident->path, "/");
@@ -108,7 +108,7 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         }
         // Copy the remaining URL to the right field
         if (i >= 2048) {
-            fprintf(stderr, "Error: %s: URL is too long", ident_string);
+            fprintf(stderr, "ERROR: %s: URL is too long", ident_string);
             ident.mode = DEPENDENCY_UNKNOWN;
         } else {
             strncat(ident.URL, ident_string + 3, i - 3);
@@ -140,7 +140,7 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         ident.mode = DEPENDENCY_TAR;
         store_identifier_extract_url_filename("file.tar.gz", ident_string + 4, &ident);
     } else {
-        fprintf(stderr, "Error: %s does not represent a valid dependency identifier\n",
+        fprintf(stderr, "ERROR: %s does not represent a valid dependency identifier\n",
                 ident_string);
         ident.mode = DEPENDENCY_UNKNOWN;
     }
@@ -247,7 +247,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
             memset(&zip_archive, 0, sizeof(zip_archive));
 
             if (!mz_zip_reader_init_file(&zip_archive, dependency->path, 0)) {
-                fprintf(stderr, "Error: Could not open zip file %s\n", dependency->path);
+                fprintf(stderr, "ERROR: Could not open zip file %s\n", dependency->path);
                 exit_code = 1;
                 break;
             }
@@ -256,7 +256,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
             for (mz_uint i = 0; i < num_files; i++) {
                 mz_zip_archive_file_stat file_stat;
                 if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat)) {
-                    fprintf(stderr, "Error: Could not get file stat for file in zip\n");
+                    fprintf(stderr, "ERROR: Could not get file stat for file in zip\n");
                     exit_code = 1;
                     break;
                 }
@@ -265,7 +265,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
 
                 if (!mz_zip_reader_is_file_a_directory(&zip_archive, i)) {
                     if (!mz_zip_reader_extract_to_file(&zip_archive, i, file_stat.m_filename, 0)) {
-                        fprintf(stderr, "Error: Could not extract file %s from zip\n",
+                        fprintf(stderr, "ERROR: Could not extract file %s from zip\n",
                                 file_stat.m_filename);
                         exit_code = 1;
                         break;
@@ -279,7 +279,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
             // dependency's directory then remove the original folder
             DIR* dir = opendir(".");
             if (!dir) {
-                perror("Error: Could not open dependency directory");
+                perror("ERROR: Could not open dependency directory");
                 exit_code = 1;
                 break;
             }
@@ -302,7 +302,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
                     // It's a directory, move its contents up
                     dir = opendir(entry_name);
                     if (!dir) {
-                        perror("Error: Could not open subdirectory");
+                        perror("ERROR: Could not open subdirectory");
                         exit_code = 1;
                         break;
                     }
@@ -313,7 +313,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
                         char new_path[4096];
                         snprintf(new_path, sizeof(new_path), "../%s", entry->d_name);
                         if (rename(entry->d_name, new_path)) {
-                            perror("Error: Could not move file");
+                            perror("ERROR: Could not move file");
                             exit_code = 1;
                             break;
                         }
@@ -322,7 +322,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
                     if (exit_code) break;
                     chdir("..");
                     if (rmdir(entry_name)) {
-                        perror("Error: Could not remove empty directory");
+                        perror("ERROR: Could not remove empty directory");
                         exit_code = 1;
                         break;
                     }
@@ -330,7 +330,7 @@ int store_get_dependency(store_dependency_identifier* dependency) {
             }
             // Remove the original zip file
             if (remove(dependency->path)) {
-                perror("Error: Could not remove zip file");
+                perror("ERROR: Could not remove zip file");
                 exit_code = 1;
             }
             // Update the dependency path to the extracted directory
@@ -359,7 +359,7 @@ int store_update_dependency(store_dependency_identifier* dependency) {
             return 0;
         case DEPENDENCY_GIT: {
             if (chdir(dependency->path)) {
-                perror("Error: Could not find dependency directory");
+                perror("ERROR: Could not find dependency directory");
                 return 1;
             }
             if (system("git pull")) {
