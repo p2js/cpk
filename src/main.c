@@ -8,6 +8,7 @@
 #include "init.c"
 #include "store/store.c"
 #include "store/store.h"
+#include "targets.c"
 #include "toml/config.c"
 
 // Dependencies
@@ -59,7 +60,6 @@ int main(int argc, char* argv[]) {
         if (!ident.mode) return 1;
         return store_update_dependency(&ident);
     }
-
     // The next options all require parsing configuration
     toml_result_t config = config_parse();
     int exit_code = -1;
@@ -102,6 +102,10 @@ int main(int argc, char* argv[]) {
         } else {
             exit_code = remove_dependency(argv[2], config);
         }
+    }
+    // cpk targets
+    if (!strcmp("targets", argv[1])) {
+        exit_code = list_targets(config);
     }
 
     if (exit_code == -1) {

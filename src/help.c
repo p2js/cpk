@@ -20,6 +20,7 @@ Commands for new projects:\n\
 Commands for project compilation:\n\
 \tcpk compile [target]\trun the compilation command for the target to its output folder\n\
 \tcpk run [target]\tcpk compile [target], then run the executable\n\
+\tcpk targets\t\tlist all targets in cpk.toml\n\
 Commands for project dependency management:\n\
 \tcpk install\t\tInstall and link all the dependencies specified in cpk.toml\n\
 \tcpk add (name=dep)+\tAdd one or more dependencies to cpk.toml and install them\n\
