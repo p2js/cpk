@@ -28,7 +28,6 @@ Commands for dependency store management:\n\
 \tcpk update (dep)\tUpdate/reinstall a dependency in the global store\n\
 \tcpk delete (dep)\tRemove a dependency from the global store\n\
 Dependency types:\n\
-\tgh:(repo)[::path]\tGitHub repository, optionally checking out path     (requires git command)\n\
 \tgit:(URL)[::path]\tGit repository at URL, optionally checking out path (requires git command)\n\
 \tweb:(URL)\t\tSingle source file hosted at URL (requires curl command)\n\
 \tzip:(URL)\t\t.zip archive hosted at URL       (requires curl command)\n\
@@ -40,7 +39,7 @@ const char* TOML_EXAMPLE =
 target_dir = \"build\" # Directory for all targets' builds, do not include if you don't want output to be moved\n\
 \n\
 [dependencies] # dependencies map names to repositories/files\n\
-CLArgs = \"gh:p2js/clargs\"\n\
+CLArgs = \"git:https://github.com/p2js/clargs.git\"\n\
 \n\
 [targets]\n\
 # targets map target names to build commands (for use with cpk run/compile)\n\

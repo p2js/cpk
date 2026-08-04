@@ -17,8 +17,6 @@
 #include "miniz/miniz.h"
 #include "xxHash/xxhash.h"
 
-const char* GITHUB_URL = "https://github.com/";
-
 static char store_dir[4096];
 
 /**
@@ -94,26 +92,7 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
     sprintf(ident.path, "%s%016lx%016lx", store_dir, ident_string_hash.high64,
             ident_string_hash.low64);
 
-    if (!strncmp("gh:", ident_string, 3)) {
-        ident.mode = DEPENDENCY_GIT;
-        strcpy(ident.URL, GITHUB_URL);
-        // Determine potential git path at end then cut off string
-        size_t a = strlen(ident_string);
-        int i;
-        for (i = 3; i < a; i++) {
-            if (ident_string[i] == ':' && ident_string[i + 1] == ':') {
-                strncpy(ident.git_path, ident_string + i + 2, 256);
-                break;
-            }
-        }
-        // Copy the remaining URL to the right field
-        if (i >= 2048) {
-            fprintf(stderr, "ERROR: %s: URL is too long", ident_string);
-            ident.mode = DEPENDENCY_UNKNOWN;
-        } else {
-            strncat(ident.URL, ident_string + 3, i - 3);
-        }
-    } else if (!strncmp("git:", ident_string, 4)) {
+    if (!strncmp("git:", ident_string, 4)) {
         ident.mode = DEPENDENCY_GIT;
         // Determine potential git path at end then cut off string
         size_t a = strlen(ident_string);

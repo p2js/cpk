@@ -1,10 +1,9 @@
 target_dir = "build"
 
 [dependencies]
-
 miniz = "zip:https://github.com/richgel999/miniz/releases/download/3.1.0/miniz-3.1.0.zip"
-tomlc17 = "gh:cktan/tomlc17"
-xxHash = "gh:cyan4973/xxHash"
+tomlc17 = "git:https://github.com/cktan/tomlc17.git"
+xxHash = "git:https://github.com/Cyan4973/xxHash.git"
 
 [targets]
 

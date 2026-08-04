@@ -54,14 +54,13 @@ The same dependency can be used in different projects (even under different name
 
 There are 5 types of dependencies, each handled differently:
 - `git:(URL)[::path]` represents a git repository hosted at URL, optionally checking out `path`.
-- `gh:(repo)[::path]` represents a GitHub repository, optionally checking out `path`.
 - `web:(URL)` represents a single source file hosted at URL.
 - `zip:(URL)` represents a `.zip` archive hosted at URL.
 - `file:(path)` represents a local directory or file. These dependencies will be linked directly rather than copied to the global dependency store.
 
 
-> `git:` and `gh:` dependency types will require that cpk have access to the `git` shell command.
-> `web:` and `zip:` dependency types will require that cpk have access to the `curl` shell command.
+> `git:` dependencies will require that cpk have access to the `git` shell command.
+> `web:` and `zip:` dependencies will require that cpk have access to the `curl` shell command.
 
 #### Referencing dependencies
 
