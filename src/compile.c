@@ -13,7 +13,7 @@ int compile_target(char* target, toml_result_t config) {
     // Check that the config defines the given target
 
     char target_table_name[4096];
-    snprintf(target_table_name, 4096, "targets.%s", target);
+    snprintf(target_table_name, 4096, "target.%s", target);
 
     toml_datum_t toml_target = toml_seek(config.toptab, target_table_name);
     if (toml_target.type != TOML_TABLE) {
@@ -117,7 +117,7 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
     // This runs after compile_target, so we are guaranteed that target_dir/target/ exists
     // and that both are validly defined in the toml
     char executable_path[4096];
-    snprintf(executable_path, 4096, "targets.%s.ex", target);
+    snprintf(executable_path, 4096, "target.%s.exec", target);
 
     toml_datum_t target_ex = toml_seek(config.toptab, executable_path);
     if (target_ex.type != TOML_STRING) {

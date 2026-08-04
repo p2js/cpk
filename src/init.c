@@ -18,18 +18,14 @@ const char* INIT_DEFAULT_TOML =
     "target_dir = \"build\" # Directory for all targets' builds\n\
 \n\
 [dependencies] # dependencies map names to repositories/files\n\
-\n\
 # Add your own here, manually or via cpk add...\n\
 \n\
-[targets]\n\
+[target.dev]\n\
 # targets map target names to build commands (for use with cpk run/compile)\n\
 # all files produced by the build command in the project folder will be output to target_dir/target_name\n\
-\n\
-# dev is the default profile (will be used by run/compile when a target arg is not provided)\n\
-dev = {\n\
-  build = \"clang $CFLAGS src/main.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
-  ex = \"a.out\" # Executable path to be used by cpk run (in target dir)\n\
-}";
+# dev is the default profile used by compile/run when called without args\n\
+build = \"clang $CFLAGS src/main.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
+exec = \"a.out\" # Executable path to be used by cpk run (in target dir)\n";
 
 /**
  * Initialises a cpk project in the given directory name.

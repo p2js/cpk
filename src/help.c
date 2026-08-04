@@ -41,15 +41,12 @@ target_dir = \"build\" # Directory for all targets' builds, do not include if yo
 [dependencies] # dependencies map names to repositories/files\n\
 CLArgs = \"git:https://github.com/p2js/clargs.git\"\n\
 \n\
-[targets]\n\
+[target.dev]\n\
 # targets map target names to build commands (for use with cpk run/compile)\n\
 # all files produced by the build command in the project folder will be output to target_dir/target_name\n\
-\n\
-# dev is the default profile (will be used by run/compile when a target arg is not provided)\n\
-dev = {\n\
-  build = \"clang $CFLAGS src/main.c src/debug.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
-  ex = \"a.out\" # Executable path to be used by cpk run (in target dir)\"\n\
-}";
+# dev is the default profile used by compile/run when called without args\n\
+build = \"clang $CFLAGS src/main.c src/debug.c\", # Build command, ensure your compiler is invoked with $CFLAGS or \"-I.cpk\" to include dependencies\n\
+exec = \"a.out\" # Executable path to be used by cpk run (in target dir)\"\n";
 
 void help_show(HelpCommand cmd) {
     switch (cmd) {
