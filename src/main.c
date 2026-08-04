@@ -1,5 +1,11 @@
 #include <string.h>
 
+// External dependencies
+#include "miniz/miniz.c"
+#include "tomlc17/src/tomlc17.c"
+#include "tomlc17/src/tomlc17.h"
+
+// Internal implementations
 #include "compile.c"
 #include "dependency.c"
 #include "dir/rmdir_recursive.c"
@@ -10,11 +16,7 @@
 #include "store/store.h"
 #include "targets.c"
 #include "toml/config.c"
-
-// Dependencies
-#include "miniz/miniz.c"
-#include "tomlc17/src/tomlc17.c"
-#include "tomlc17/src/tomlc17.h"
+#include "toml/write.c"
 
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
@@ -98,6 +100,7 @@ int main(int argc, char* argv[]) {
     if (!strcmp("add", argv[1])) {
         store_init();
         exit_code = add_dependencies(argv + 2, config);
+        exit_code = config_write_out(config) | exit_code;
     }
     // cpk remove (name)
     if (!strcmp("remove", argv[1])) {
@@ -106,6 +109,7 @@ int main(int argc, char* argv[]) {
             exit_code = 1;
         } else {
             exit_code = remove_dependency(argv[2], config);
+            exit_code = config_write_out(config) | exit_code;
         }
     }
     // cpk targets

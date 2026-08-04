@@ -7,7 +7,6 @@
 
 #include "dir/rmdir_recursive.h"
 #include "store/store.h"
-#include "toml/config.h"
 #include "tomlc17/src/tomlc17.h"
 
 /**
@@ -15,7 +14,7 @@
  */
 int install_dependencies(toml_result_t config) {
     // Remove and recreate .cpk directory
-    if (rmdir_r(".cpk", true)) {
+    if (rmdir_r(".cpk", true) && errno != ENOENT) {
         perror(
             "WARNING: Could not remove .cpk directory, will install and link dependencies anyway");
     }
@@ -29,6 +28,7 @@ int install_dependencies(toml_result_t config) {
         fprintf(stderr, "ERROR: cpk.toml: dependencies table not found");
         return 1;
     }
+
     int exit_code = 0;
     for (int i = 0; i < dependencies_table.u.tab.size; i++) {
         const char* dependency_key = dependencies_table.u.tab.key[i];
@@ -39,7 +39,7 @@ int install_dependencies(toml_result_t config) {
             exit_code = 1;
             continue;
         }
-        printf("\e[1m(%d/%d)\e[0m Installing and linking %s from %s...\n", i + 1,
+        printf("\e[1m(%d/%d)\e[0m Installing and linking %s from \"%s\"\n", i + 1,
                dependencies_table.u.tab.size, dependency_key, dependency_value.u.str.ptr);
         store_dependency_identifier identifier =
             store_resolve_identifier(dependency_value.u.str.ptr);
@@ -52,211 +52,187 @@ int install_dependencies(toml_result_t config) {
     return exit_code;
 }
 
-/**
- * Growable string struct used to rebuild dependency tables to rewrite to cpk.toml.
- */
-typedef struct {
-    char* ptr;
-    size_t len;
-    size_t cap;
-} dep_string;
-
-dep_string dep_string_new(size_t starting_cap) {
-    char* ptr = malloc(starting_cap);
-    if (!ptr) {
-        fprintf(stderr, "ERROR: out of memory\n");
-        exit(1);
-    }
-    dep_string out = {
-        .ptr = malloc(starting_cap),
-        .len = 16,
-        .cap = starting_cap,
-    };
-    memcpy(out.ptr, "[dependencies]\n\n", 16);
-    return out;
-}
-
-void dep_string_ensure_space(dep_string string, size_t size_needed) {
-    if (string.len + size_needed >= string.cap) {
-        string.cap *= 2;
-        string.ptr = realloc(string.ptr, string.cap);
-        if (!string.ptr) {
-            fprintf(stderr, "Out of memory\n");
-            exit(1);
-        }
-    }
-}
-
-int dep_string_write(dep_string string) {
-    string.ptr[string.len] = 0;
-    int exit_code = config_write_dependencies(string.ptr);
-    free(string.ptr);
-    return exit_code;
-}
+// add_dependencies and remove_dependency need access to some tomlc17 internal functions
+typedef struct pool_t pool_t;
+extern char* pool_alloc(pool_t* pool, int n);
+extern char* cell_realloc(char* p, int size);
+extern void datum_free(toml_datum_t* datum);
 
 /**
  * Installs all dependencies provided and adds them to cpk.toml
  * Expects a null-terminated array of dependency types as described by the help menu.
  */
 int add_dependencies(char* new_dependencies[], toml_result_t config) {
-    // get previous dependencies in cpk.toml (to re-stringify)
-    toml_datum_t deps = toml_get(config.toptab, "dependencies");
+    toml_datum_t* deps = NULL;
 
-    if (deps.type != TOML_TABLE && deps.type != TOML_UNKNOWN) {
-        fprintf(stderr, "ERROR: cpk.toml: dependencies is not defined as a valid table");
+    for (int i = 0; i < config.toptab.u.tab.size; i++) {
+        if (!strcmp(config.toptab.u.tab.key[i], "dependencies")) {
+            deps = &config.toptab.u.tab.value[i];
+            break;
+        }
+    }
+
+    if (!deps || deps->type != TOML_TABLE) {
+        fprintf(stderr, "ERROR: cpk.toml: dependencies is not defined as a valid table\n");
         return 1;
     }
 
-    // build string dynamically
-    dep_string dep_string = dep_string_new(4096);
-
-    // re-add existing dependencies if present
-    if (deps.type == TOML_TABLE) {
-        for (int i = 0; i < deps.u.tab.size; i++) {
-            const char* dependency_key = deps.u.tab.key[i];
-            size_t dependency_key_len = deps.u.tab.len[i];
-            toml_datum_t dependency_val = deps.u.tab.value[i];
-            if (dependency_val.type != TOML_STRING) {
-                fprintf(stderr,
-                        "WARNING: dependency '%s' is not a string, removing from cpk.toml\n",
-                        dependency_key);
-                continue;
-            }
-
-            size_t space_needed =
-                dependency_key_len + dependency_val.u.str.len + 6;  // key = "val"\n
-            dep_string_ensure_space(dep_string, space_needed);
-
-            dep_string.len += sprintf(dep_string.ptr + dep_string.len, "%s = \"%s\"\n",
-                                      dependency_key, dependency_val.u.str.ptr);
-        }
-    }
-
-    // add new dependencies from cli
     for (size_t i = 0; new_dependencies[i] != NULL; i++) {
         char* dep_equals = strchr(new_dependencies[i], '=');
+
         if (!dep_equals) {
             fprintf(
                 stderr,
-                "Error parsing dependency \"%s\": No equals sign separating local name from dependency value\nThis dependency will be skipped.\n",
+                "Error parsing dependency \"%s\": No equals sign separating local name from dependency value\n"
+                "This dependency will be skipped.\n",
                 new_dependencies[i]);
             continue;
         }
 
-        // split into key=value
         size_t key_len = dep_equals - new_dependencies[i];
-        char dependency_key[256];
+
         if (key_len == 0) {
-            fprintf(
-                stderr,
-                "ERROR: Dependency name not provided in \"%s\".\nThis dependency will be skipped.\n",
-                new_dependencies[i]);
-            continue;
-        }
-        if (key_len >= sizeof(dependency_key)) {
-            fprintf(
-                stderr,
-                "ERROR: dependency name \"%s\"is too long (max 256 characters)\nThis dependency will be skipped.\n",
-                new_dependencies[i]);
-            continue;
-        }
-        memcpy(dependency_key, new_dependencies[i], key_len);
-        dependency_key[key_len] = 0;
-        const char* dependency_value = dep_equals + 1;
-        if (dependency_value[0] == 0) {
-            fprintf(
-                stderr,
-                "Error, Dependency value not provided in \"%s\".\nThis dependency will be skipped.\n",
-                new_dependencies[i]);
+            fprintf(stderr,
+                    "ERROR: Dependency name not provided in \"%s\".\n"
+                    "This dependency will be skipped.\n",
+                    new_dependencies[i]);
             continue;
         }
 
-        // check that the key was not already defined in previous toml or arg dependencies
+        char dependency_key[256];
+
+        if (key_len >= sizeof(dependency_key)) {
+            fprintf(stderr,
+                    "ERROR: dependency name \"%s\" is too long\n"
+                    "This dependency will be skipped.\n",
+                    new_dependencies[i]);
+            continue;
+        }
+
+        memcpy(dependency_key, new_dependencies[i], key_len);
+        dependency_key[key_len] = '\0';
+
+        const char* dependency_value = dep_equals + 1;
+
+        if (dependency_value[0] == '\0') {
+            fprintf(stderr,
+                    "ERROR: dependency value not provided in \"%s\".\n"
+                    "This dependency will be skipped.\n",
+                    new_dependencies[i]);
+            continue;
+        }
+
         bool duplicate = false;
-        const char* p = dep_string.ptr;
-        while (*p) {
-            const char* line_start = p;
-            const char* newline = strchr(p, '\n');
-            size_t len = newline ? (size_t)(newline - p) : strlen(p);
-            // check if line starts with 'key ='
-            if (len > key_len + 3 && strncmp(line_start, dependency_key, key_len) == 0 &&
-                line_start[key_len] == ' ' && line_start[key_len + 1] == '=') {
+
+        for (int j = 0; j < deps->u.tab.size; j++) {
+            if (deps->u.tab.value[j].type != TOML_STRING) continue;
+
+            if (!strcmp(deps->u.tab.key[j], dependency_key)) {
                 duplicate = true;
                 break;
             }
-            // move to next line
-            p = newline ? newline + 1 : p + len;
         }
 
         if (duplicate) {
             fprintf(
                 stderr,
-                "Error adding dependency \"%1$s\": Dependency name \"%2$s\" was already defined in cpk.toml or another argument.\nIf you intended to replace it, please run \"cpk remove %2$s\" first.\nThis dependency will be skipped.\n",
+                "Error adding dependency \"%s\": Dependency name \"%s\" was already defined in cpk.toml.\n"
+                "If you intended to replace it, please remove it first.\n"
+                "This dependency will be skipped.\n",
                 new_dependencies[i], dependency_key);
             continue;
         }
 
-        // Install and link the dependency
-        printf("Installing and linking %s from %s...\n", dependency_key, dependency_value);
+        printf("Installing and linking %s from \"%s\"\n", dependency_key, dependency_value);
         store_dependency_identifier identifier = store_resolve_identifier(dependency_value);
         if (!identifier.mode) {
             fprintf(stderr, "This dependency will be skipped.\n");
             continue;
         }
-        store_get_dependency(&identifier) || store_create_symlink(&identifier, dependency_key);
-        size_t space_needed =
-            key_len + strlen(dependency_value) +
-            7;  // key = "val"\n, plus an extra space for a null-terminator if at end
+        if (!store_get_dependency(&identifier)) {
+            store_create_symlink(&identifier, dependency_key);
+        }
 
-        dep_string_ensure_space(dep_string, space_needed);
-        dep_string.len += sprintf(dep_string.ptr + dep_string.len, "%s = \"%s\"\n", dependency_key,
-                                  dependency_value);
+        int index = deps->u.tab.size;
+        int new_size = index + 1;
+
+        deps->u.tab.key =
+            (const char**)cell_realloc((char*)deps->u.tab.key, sizeof(*deps->u.tab.key) * new_size);
+
+        deps->u.tab.len =
+            (int*)cell_realloc((char*)deps->u.tab.len, sizeof(*deps->u.tab.len) * new_size);
+
+        deps->u.tab.value = (toml_datum_t*)cell_realloc((char*)deps->u.tab.value,
+                                                        sizeof(*deps->u.tab.value) * new_size);
+
+        if (!deps->u.tab.key || !deps->u.tab.len || !deps->u.tab.value) {
+            fprintf(stderr, "ERROR: Failed reallocating dependencies table\n");
+            return 1;
+        }
+
+        char* key_copy = pool_alloc(config.__internal, key_len + 1);
+        if (!key_copy) {
+            fprintf(stderr, "ERROR: Failed allocating dependency key\n");
+            return 1;
+        }
+
+        memcpy(key_copy, dependency_key, key_len + 1);
+
+        size_t value_len = strlen(dependency_value);
+
+        char* value_copy = pool_alloc(config.__internal, value_len + 1);
+        if (!value_copy) {
+            fprintf(stderr, "ERROR: Failed allocating dependency value\n");
+            return 1;
+        }
+
+        memcpy(value_copy, dependency_value, value_len + 1);
+
+        deps->u.tab.key[index] = key_copy;
+        deps->u.tab.len[index] = key_len;
+
+        deps->u.tab.value[index] = (toml_datum_t){
+            .type = TOML_STRING,
+            .u.str =
+                {
+                    .ptr = value_copy,
+                    .len = value_len,
+                },
+        };
+
+        deps->u.tab.size = new_size;
     }
-    // Write the updated dependencies into cpk.toml
-    return dep_string_write(dep_string);
+
+    return 0;
 }
 
 int remove_dependency(char* dependency, toml_result_t config) {
     bool removed = false;
 
-    // get previous dependencies in cpk.toml (to re-stringify)
     toml_datum_t deps = toml_get(config.toptab, "dependencies");
-
     if (deps.type != TOML_TABLE) {
         fprintf(stderr, "ERROR: cpk.toml: dependencies is not defined as a valid table");
         return 1;
     }
-    dep_string dep_string = dep_string_new(4096);
 
-    // re-add all dependencies except for the one to be removed
-    if (deps.type == TOML_TABLE) {
-        for (int i = 0; i < deps.u.tab.size; i++) {
-            const char* dependency_key = deps.u.tab.key[i];
-            size_t dependency_key_len = deps.u.tab.len[i];
-            toml_datum_t dependency_val = deps.u.tab.value[i];
-            if (dependency_val.type != TOML_STRING) {
-                fprintf(stderr,
-                        "WARNING: dependency '%s' is not a string, removing from cpk.toml\n",
-                        dependency_key);
-                continue;
-            }
-            if (!strcmp(dependency_key, dependency)) {
-                removed = true;
-                continue;
-            }
-            size_t space_needed =
-                dependency_key_len + dependency_val.u.str.len + 6;  // key = "val"\n
-            dep_string_ensure_space(dep_string, space_needed);
-            dep_string.len += sprintf(dep_string.ptr + dep_string.len, "%s = \"%s\"\n",
-                                      dependency_key, dependency_val.u.str.ptr);
+    for (int i = 0; i < deps.u.tab.size; i++) {
+        const char* dependency_key = deps.u.tab.key[i];
+        toml_datum_t* dependency_val = &deps.u.tab.value[i];
+
+        if (!strcmp(dependency_key, dependency)) {
+            datum_free(dependency_val);
+            dependency_val->type = TOML_UNKNOWN;
+            removed = true;
+            break;
         }
     }
+
     if (!removed) {
         fprintf(stderr, "ERROR: Could not remove dependency \"%s\": Not found in cpk.toml\n",
                 dependency);
         return 1;
     }
-    // Otherwise unlink the dependency and rewrite the new dependency string
+
     printf("Unlinking and removing %s from the project\n", dependency);
-    return store_remove_symlink(dependency) || dep_string_write(dep_string);
+    return store_remove_symlink(dependency);
 }
