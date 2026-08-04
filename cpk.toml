@@ -13,7 +13,7 @@ exec = "cpk"
 build = "clang src/main.c -O3 -I.cpk -o cpk"
 exec = "cpk"
 
-[target.static-musl]
+[target.docker-static-musl]
 build = [
     "tar -chf cpk.tar .cpk",
     "docker cp $(docker create $(docker build -f dockerfile-static-musl -q .)):/cpk-static-musl .",

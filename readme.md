@@ -74,9 +74,9 @@ to reinstall or delete a dependency from cpk's global store, use `cpk update (de
 
 cpk also doubles as a simple multi-target project runner that can integrate with your current build system.
 
-New targets can be defined in the `[targets]` table of `cpk.toml`. Each target has a name, a build command and an executable file name.
+New targets can be defined in the `[targets]` table of `cpk.toml`. Each target has a name, one or more build commands, and an executable file name.
 
-Running `cpk compile [name]` will invoke your build command, and `cpk run [name] [...args]` will both invoke the build command and execute the file defined, forwarding any arguments given after the target name. All files produced by your build command will be moved to `target_dir/name`, where `target_dir` is the main output directory defined at the top of `cpk.toml`.
+Running `cpk compile [name]` will invoke your build commands, and `cpk run [name] [...args]` will both invoke the build commands and execute the file defined, forwarding any arguments given after the target name. All files produced by your build command will be moved to `target_dir/name`, where `target_dir` is the main output directory defined at the top of `cpk.toml`.
 
 Using either command with no arguments will use the `dev` target. If `target_dir` is not defined, the output files will not be moved.
 

@@ -18,7 +18,7 @@ Commands for new projects:\n\
 \tcpk help\t\tShow the help menu\n\
 \tcpk ex\t\t\tShow a comprehensive example for cpk.toml\n\
 Commands for project compilation:\n\
-\tcpk compile [target]\trun the compilation command for the target to its output folder\n\
+\tcpk compile target*\trun the compilation command for the target to its output folder\n\
 \tcpk run [target]\tcpk compile [target], then run the executable\n\
 \tcpk targets\t\tlist all targets in cpk.toml\n\
 Commands for project dependency management:\n\

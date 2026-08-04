@@ -60,12 +60,21 @@ int compile_target(char* target, toml_result_t config) {
 
     // Compile code using the build script
     toml_datum_t toml_target_build = toml_get(toml_target, "build");
-    if (toml_target_build.type != TOML_STRING) {
-        fprintf(stderr, "ERROR: cpk.toml: target %s does not provide a build command string\n",
+    if (toml_target_build.type != TOML_STRING && toml_target_build.type != TOML_ARRAY) {
+        fprintf(stderr, "ERROR: cpk.toml: target %s does not provide one or more build commands\n",
                 target);
         return 1;
     }
-    const char* build_command = toml_target_build.u.str.ptr;
+    // If given an array of commands, validate that each one is a string
+    if (toml_target_build.type == TOML_ARRAY) {
+        for (int32_t i = 0; i < toml_target_build.u.arr.size; i++) {
+            if (toml_target_build.u.arr.elem[i].type != TOML_STRING) {
+                fprintf(stderr, "ERROR: cpk.toml: build command %d of target %s is not a string\n",
+                        i + 1, target);
+                return 1;
+            }
+        }
+    }
 
     // Inject dependencies via CFLAGS environment variable
     char* original_cflags = getenv("CFLAGS");
@@ -81,14 +90,31 @@ int compile_target(char* target, toml_result_t config) {
     dir_snapshot before = snapshot_directory(".");
 
     // Run build command
-    printf("> %s\n", build_command);
-    int build_result = system(build_command);
-    if (build_result) {
-        fprintf(stderr, "ERROR: build command returned non-zero exit code\n");
-        snapshot_free(&before);
-        free(new_cflags);
-        return build_result;
+    if (toml_target_build.type == TOML_STRING) {
+        const char* build_command = toml_target_build.u.str.ptr;
+        printf("> %s\n", build_command);
+        int build_result = system(build_command);
+        if (build_result) {
+            fprintf(stderr, "ERROR: build command returned non-zero exit code\n");
+            snapshot_free(&before);
+            free(new_cflags);
+            return build_result;
+        }
+    } else {
+        for (int32_t i = 0; i < toml_target_build.u.arr.size; i++) {
+            toml_datum_t command_datum = toml_target_build.u.arr.elem[i];
+            const char* build_command = command_datum.u.str.ptr;
+            printf("%d> %s\n", i + 1, build_command);
+            int build_result = system(build_command);
+            if (build_result) {
+                fprintf(stderr, "ERROR: build command %d returned non-zero exit code\n", i + 1);
+                snapshot_free(&before);
+                free(new_cflags);
+                return build_result;
+            }
+        }
     }
+
     // Capture and diff directory after build, move any new files to target
     dir_snapshot after = snapshot_directory(".");
     dir_snapshot diff = diff_snapshots(&before, &after);
