@@ -25,7 +25,7 @@ void config_free(toml_result_t config) {
     toml_free(config);
 }
 
-extern char* toml_stringify_result(const toml_result_t* r);
+char* toml_stringify_result(const toml_result_t* r);
 
 int config_write_out(toml_result_t config) {
     char* txt = toml_stringify_result(&config);

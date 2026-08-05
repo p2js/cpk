@@ -54,9 +54,9 @@ int install_dependencies(toml_result_t config) {
 
 // add_dependencies and remove_dependency need access to some tomlc17 internal functions
 typedef struct pool_t pool_t;
-extern char* pool_alloc(pool_t* pool, int n);
-extern char* cell_realloc(char* p, int size);
-extern void datum_free(toml_datum_t* datum);
+char* pool_alloc(pool_t* pool, int n);
+char* cell_realloc(char* p, int size);
+void datum_free(toml_datum_t* datum);
 
 /**
  * Installs all dependencies provided and adds them to cpk.toml
