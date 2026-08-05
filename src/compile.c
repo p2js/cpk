@@ -87,11 +87,18 @@ int compile_target(char* target, toml_result_t config) {
     setenv("CFLAGS", new_cflags, true);
 
     // Capture project directory before build command
-    dir_snapshot before = snapshot_directory(".");
+    dir_snapshot before, after, diff;
+    if (move) before = snapshot_directory(".");
 
-    // Run build command
-    if (toml_target_build.type == TOML_STRING) {
-        const char* build_command = toml_target_build.u.str.ptr;
+    toml_datum_t build_commands =
+        toml_target_build.type == TOML_ARRAY
+            ? toml_target_build
+            : (toml_datum_t){.type = TOML_ARRAY, .u.arr = {.size = 1, .elem = &toml_target_build}};
+
+    // Run build command(s)
+    for (int32_t i = 0; i < build_commands.u.arr.size; i++) {
+        toml_datum_t command_datum = build_commands.u.arr.elem[i];
+        const char* build_command = command_datum.u.str.ptr;
         printf("> %s\n", build_command);
         int build_result = system(build_command);
         if (build_result) {
@@ -100,33 +107,20 @@ int compile_target(char* target, toml_result_t config) {
             free(new_cflags);
             return build_result;
         }
-    } else {
-        for (int32_t i = 0; i < toml_target_build.u.arr.size; i++) {
-            toml_datum_t command_datum = toml_target_build.u.arr.elem[i];
-            const char* build_command = command_datum.u.str.ptr;
-            printf("%d> %s\n", i + 1, build_command);
-            int build_result = system(build_command);
-            if (build_result) {
-                fprintf(stderr, "ERROR: build command %d returned non-zero exit code\n", i + 1);
-                snapshot_free(&before);
-                free(new_cflags);
-                return build_result;
-            }
-        }
     }
 
     // Capture and diff directory after build, move any new files to target
-    dir_snapshot after = snapshot_directory(".");
-    dir_snapshot diff = diff_snapshots(&before, &after);
-
-    if (!diff.count && toml_target_dir.type == TOML_STRING) {
-        fprintf(stderr, "WARNING: build command did not produce any output files\n");
+    if (move) {
+        after = snapshot_directory(".");
+        diff = diff_snapshots(&before, &after);
+        if (!diff.count) {
+            fprintf(stderr, "WARNING: build command did not produce any output files\n");
+        }
+        move_snapshot_diff_items(&diff, ".", dirpath);
+        snapshot_free(&before);
+        snapshot_free(&after);
+        snapshot_free(&diff);
     }
-    move_snapshot_diff_items(&diff, ".", dirpath);
-
-    snapshot_free(&before);
-    snapshot_free(&after);
-    snapshot_free(&diff);
 
     // reset CFLAGS
     free(new_cflags);
