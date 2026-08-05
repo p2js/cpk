@@ -13,10 +13,10 @@ The same dependency can be used in different projects (even under different name
 #### Dependency types
 
 There are 5 types of dependencies, each handled differently:
-- `git:(repo)[::path]` represents a git repository to be cloned from `repo` (can be a URL or local link), optionally checking out `path`.
-- `web:(URL)` represents a single source file hosted at `URL`.
-- `zip:(URL)` represents a `.zip` archive hosted at `URL`.
-- `file:(path)` represents a local directory or file. These dependencies will be linked directly rather than copied to the global dependency store.
+- `git:<repo>[::<path>]` represents a git repository to be cloned from `repo` (can be a URL or local link), optionally checking out `path`.
+- `web:<URL>` represents a single source file hosted at `URL`.
+- `zip:<URL>` represents a `.zip` archive hosted at `URL`.
+- `file:<path>` represents a local directory or file. These dependencies will be linked directly rather than copied to the global dependency store.
 
 > `git:` dependencies will require that cpk have access to the `git` shell command.
 > `web:` and `zip:` dependencies will require that cpk have access to the `curl` shell command.
