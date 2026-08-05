@@ -1,9 +1,13 @@
+#include <stdbool.h>
 #include <string.h>
 
 // External dependencies
 #include "miniz/miniz.c"
 #include "tomlc17/src/tomlc17.c"
 #include "tomlc17/src/tomlc17.h"
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxHash/xxhash.h"
 
 // Internal implementations
 #include "compile.c"
@@ -17,10 +21,9 @@
 #include "targets.c"
 #include "toml/config.c"
 #include "toml/write.c"
-
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#include "xxHash/xxhash.h"
+//
+#include "fmt/color.c"
+#include "fmt/color.h"
 
 int main(int argc, char* argv[]) {
     // cpk help
@@ -36,7 +39,7 @@ int main(int argc, char* argv[]) {
     // cpk delete (dep)
     if (!strcmp("delete", argv[1])) {
         if (argc < 3) {
-            printf("Please provide a dependency identifier to delete from the global store.\n");
+            print_err(false, "no dependency identifier provided");
             return 1;
         }
         printf("Deleting %s from the global dependency store\n", argv[2]);
@@ -48,7 +51,7 @@ int main(int argc, char* argv[]) {
     // cpk update (dep)
     if (!strcmp("update", argv[1])) {
         if (argc < 3) {
-            printf("Please provide a dependency identifier to update in the global store.\n");
+            print_err(false, "no dependency identifier provided");
             return 1;
         }
         printf("Updating %s in the global dependency store\n", argv[2]);
@@ -75,14 +78,11 @@ int main(int argc, char* argv[]) {
     if (!strcmp("run", argv[1])) {
         char* target = "dev";
         char** run_argv = &argv[argc - 1];
-
         if (argc >= 2) {
             target = argv[2];
             run_argv = argv + 2;
         }
-
         printf("Compiling and running target %s\n", target);
-
         exit_code = compile_target(target, config);
         if (!exit_code) exit_code = run_target(target, config, run_argv);
     }
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
     // cpk remove (name)
     if (!strcmp("remove", argv[1])) {
         if (argc < 3) {
-            printf("No dependency name was specified\n");
+            print_err(false, "no dependency name was specified");
             exit_code = 1;
         } else {
             exit_code = remove_dependency(argv[2], config);
@@ -113,7 +113,8 @@ int main(int argc, char* argv[]) {
     }
 
     if (exit_code == -1) {
-        printf("Unknown command '%s'\nTo view a list of commands, use 'cpk help'\n", argv[1]);
+        print_err(false, "unknown command '%s'\n      to view a list of commands, use 'cpk help'",
+                  argv[1]);
         exit_code = 1;
     }
 
