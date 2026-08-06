@@ -21,7 +21,7 @@ exec = "cpk"
 build = "clang -O3 -s --target=x86_64-linux-musl src/main.c -I.cpk -o cpk"
 exec = "cpk"
 
-[target.docker-aarch64-static-musl]
+[target.release-aarch64-static-musl]
 build = [
     "tar -chf cpk.tar .cpk",
     "docker cp $(docker create $(docker build -f aarch64-static-musl.Dockerfile -q .)):/cpk .",
