@@ -34,7 +34,7 @@ int compile_target(char* target, toml_result_t config) {
     int target_dir_len = toml_target_dir.type == TOML_STRING ? toml_target_dir.u.str.len : 0;
 
     char dirpath[4096];
-    bool move = true;
+    bool move = target_dir != NULL;
 
     if (target_dir_len + strlen(target) + 2 > 4096) {
         print_err(false, "target directory path is too long");
@@ -102,31 +102,26 @@ int compile_target(char* target, toml_result_t config) {
         return build_result;
     }
 
-    if (target_dir) {
-        // Make the build and target directories if they don't already exist
-        if (mkdir(target_dir, 0700) && errno != EEXIST) {
-            print_err(true, "could not create targets directory %s", target_dir);
-            return 1;
-        }
-        strcpy(dirpath, target_dir);
-        dirpath[target_dir_len] = '/';
-        strcpy(dirpath + target_dir_len + 1, target);
-        if (mkdir(dirpath, 0700) && errno != EEXIST) {
-            print_err(true, "could not create target directory %s", dirpath);
-            return 1;
-        }
-    } else {
-        move = false;
-        dirpath[0] = '.';
-        dirpath[1] = 0;
-    }
-    // Capture and diff directory after build, move any new files to target
+    // Capture and diff directory after build, move any new files to target dir
     if (move) {
         after = snapshot_directory(".");
         diff = diff_snapshots(&before, &after);
         if (!diff.count) {
             print_warn("build command did not produce any output files");
         } else {
+            // Create dir if it doesn't already exist
+            if (mkdir(target_dir, 0700) && errno != EEXIST) {
+                print_err(true, "could not create targets directory %s", target_dir);
+                return 1;
+            }
+            strcpy(dirpath, target_dir);
+            dirpath[target_dir_len] = '/';
+            strcpy(dirpath + target_dir_len + 1, target);
+            if (mkdir(dirpath, 0700) && errno != EEXIST) {
+                print_err(true, "could not create target directory %s", dirpath);
+                return 1;
+            }
+
             move_snapshot_diff_items(&diff, ".", dirpath);
         }
         snapshot_free(&before);
