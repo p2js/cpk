@@ -1,4 +1,4 @@
-target_dir = "build"
+target-dir = "build"
 
 [dependencies]
 miniz = "zip:https://github.com/richgel999/miniz/releases/download/3.1.0/miniz-3.1.0.zip"

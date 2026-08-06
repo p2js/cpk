@@ -23,9 +23,9 @@ int compile_target(char* target, toml_result_t config) {
     }
 
     // Grab the target dir name, use current dire
-    toml_datum_t toml_target_dir = toml_get(config.toptab, "target_dir");
+    toml_datum_t toml_target_dir = toml_get(config.toptab, "target-dir");
     if (toml_target_dir.type != TOML_STRING) {
-        print_info("cpk.toml: target_dir not defined, using current directory");
+        print_info("cpk.toml: target-dir not defined, using current directory");
     }
     const char* target_dir = toml_target_dir.type == TOML_STRING ? toml_target_dir.u.str.ptr : NULL;
     int target_dir_len = toml_target_dir.type == TOML_STRING ? toml_target_dir.u.str.len : 0;
@@ -133,7 +133,7 @@ int compile_target(char* target, toml_result_t config) {
 }
 
 int run_target(char* target, toml_result_t config, char* argv[]) {
-    // This runs after compile_target, so we are guaranteed that target_dir/target/ exists
+    // This runs after compile_target, so we are guaranteed that target-dir/target/ exists
     // and that both are validly defined in the toml
     char executable_path[4096];
     snprintf(executable_path, 4096, "target.%s.exec", target);
@@ -144,7 +144,7 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
         return 1;
     }
     const char* executable_name = target_ex.u.str.ptr;
-    toml_datum_t toml_target_dir = toml_get(config.toptab, "target_dir");
+    toml_datum_t toml_target_dir = toml_get(config.toptab, "target-dir");
     if (toml_target_dir.type == TOML_STRING) {
         snprintf(executable_path, 4096, "%s/%s/%s", toml_target_dir.u.str.ptr, target,
                  executable_name);

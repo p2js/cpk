@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     if (!strcmp("run", argv[1])) {
         char* target = "dev";
         char** run_argv = &argv[argc - 1];
-        if (argc >= 2) {
+        if (argc > 2) {
             target = argv[2];
             run_argv = argv + 2;
         }
