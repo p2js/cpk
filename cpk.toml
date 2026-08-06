@@ -10,12 +10,20 @@ build = "clang src/main.c -I.cpk -o cpk"
 exec = "cpk"
 
 [target.release]
-build = "clang src/main.c -O3 -I.cpk -o cpk"
+build = "clang src/main.c -O3 -s -I.cpk -o cpk"
 exec = "cpk"
 
-[target.docker-static-musl]
+[target.release-x86_64]
+build = "clang -O3 -s --target=x86_64-linux-gnu src/main.c -I.cpk -o cpk"
+exec = "cpk"
+
+[target.release-x86_64-static-musl]
+build = "clang -O3 -s --target=x86_64-linux-musl src/main.c -I.cpk -o cpk"
+exec = "cpk"
+
+[target.docker-aarch64-static-musl]
 build = [
     "tar -chf cpk.tar .cpk",
-    "docker cp $(docker create $(docker build -f dockerfile-static-musl -q .)):/cpk-static-musl .",
+    "docker cp $(docker create $(docker build -f aarch64-static-musl.Dockerfile -q .)):/cpk .",
     "rm cpk.tar",
 ]
