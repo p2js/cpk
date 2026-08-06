@@ -41,25 +41,6 @@ int compile_target(char* target, toml_result_t config) {
         return 1;
     }
 
-    if (target_dir) {
-        // Make the build and target directories if they don't already exist
-        if (mkdir(target_dir, 0700) && errno != EEXIST) {
-            print_err(true, "could not create targets directory %s", target_dir);
-            return 1;
-        }
-        strcpy(dirpath, target_dir);
-        dirpath[target_dir_len] = '/';
-        strcpy(dirpath + target_dir_len + 1, target);
-        if (mkdir(dirpath, 0700) && errno != EEXIST) {
-            print_err(true, "could not create target directory %s", dirpath);
-            return 1;
-        }
-    } else {
-        move = false;
-        dirpath[0] = '.';
-        dirpath[1] = 0;
-    }
-
     // Compile code using the build script
     toml_datum_t toml_target_build = toml_get(toml_target, "build");
     if (toml_target_build.type != TOML_STRING && toml_target_build.type != TOML_ARRAY) {
@@ -121,6 +102,24 @@ int compile_target(char* target, toml_result_t config) {
         return build_result;
     }
 
+    if (target_dir) {
+        // Make the build and target directories if they don't already exist
+        if (mkdir(target_dir, 0700) && errno != EEXIST) {
+            print_err(true, "could not create targets directory %s", target_dir);
+            return 1;
+        }
+        strcpy(dirpath, target_dir);
+        dirpath[target_dir_len] = '/';
+        strcpy(dirpath + target_dir_len + 1, target);
+        if (mkdir(dirpath, 0700) && errno != EEXIST) {
+            print_err(true, "could not create target directory %s", dirpath);
+            return 1;
+        }
+    } else {
+        move = false;
+        dirpath[0] = '.';
+        dirpath[1] = 0;
+    }
     // Capture and diff directory after build, move any new files to target
     if (move) {
         after = snapshot_directory(".");
