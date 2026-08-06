@@ -2,6 +2,9 @@
  * color.h
  * Functions and macro definitions for terminal-aware color formatting.
  */
+#ifndef _CPK_COLOR_H
+#define _CPK_COLOR_H
+
 #include <stdbool.h>
 
 bool use_colors;
@@ -62,3 +65,5 @@ void print_info(const char* fmt, ...);
 #define COLOR_BGMAGENTABRIGHT(message) __DEFINE_COLOR__(105, message, 49)
 #define COLOR_BGCYANBRIGHT(message) __DEFINE_COLOR__(106, message, 49)
 #define COLOR_BGWHITEBRIGHT(message) __DEFINE_COLOR__(107, message, 49)
+
+#endif
