@@ -120,7 +120,7 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
         ident.mode = DEPENDENCY_TAR;
         store_identifier_extract_url_filename("file.tar.gz", ident_string + 4, &ident);
     } else {
-        print_err(false, "%s does not represent a valid dependency identifier", ident_string);
+        print_err(false, "%s is not a valid dependency identifier", ident_string);
         ident.mode = DEPENDENCY_UNKNOWN;
     }
 

@@ -19,4 +19,3 @@ build = [
     "docker cp $(docker create $(docker build -f dockerfile-static-musl -q .)):/cpk-static-musl .",
     "rm cpk.tar",
 ]
-exec = "cpk-static-musl"

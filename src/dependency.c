@@ -39,7 +39,7 @@ int install_dependencies(toml_result_t config) {
             exit_code = 1;
             continue;
         }
-        printf(use_colors() ? COLOR_BOLD("(%d/%d)") : "(%d/%d)", i + 1,
+        printf(use_colors ? COLOR_BOLD("(%d/%d)") : "(%d/%d)", i + 1,
                dependencies_table.u.tab.size);
         printf(" Installing and linking %s from \"%s\"\n", dependency_key,
                dependency_value.u.str.ptr);

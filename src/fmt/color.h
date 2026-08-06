@@ -1,6 +1,8 @@
 #include <stdbool.h>
 
-bool use_colors();
+bool use_colors;
+void set_use_colors();
+
 void print_err(bool use_perror, const char* fmt, ...);
 void print_warn(const char* fmt, ...);
 void print_info(const char* fmt, ...);

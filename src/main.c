@@ -8,24 +8,25 @@
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
 #include "xxHash/xxhash.h"
-
-// Internal implementations
-#include "compile.c"
-#include "dependency.c"
+// Internal dependencies
 #include "dir/rmdir_recursive.c"
 #include "dir/snapshot.c"
-#include "help.c"
-#include "init.c"
-#include "store/store.c"
-#include "store/store.h"
-#include "targets.c"
-#include "toml/config.c"
-#include "toml/write.c"
-//
 #include "fmt/color.c"
 #include "fmt/color.h"
+#include "store/store.c"
+#include "store/store.h"
+#include "toml/config.c"
+#include "toml/write.c"
+// Command implementations
+#include "compile.c"
+#include "dependency.c"
+#include "help.c"
+#include "init.c"
+#include "targets.c"
 
 int main(int argc, char* argv[]) {
+    set_use_colors();
+
     // cpk help
     if (argc == 1 || !strcmp("help", argv[1])) {
         help_show(HELP);
