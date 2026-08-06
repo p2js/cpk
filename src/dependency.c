@@ -209,6 +209,9 @@ int add_dependencies(char* new_dependencies[], toml_result_t config) {
     return 0;
 }
 
+/**
+ * removes a dependency from cpk.toml
+ */
 int remove_dependency(char* dependency, toml_result_t config) {
     bool removed = false;
 

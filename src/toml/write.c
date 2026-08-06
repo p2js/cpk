@@ -1,3 +1,7 @@
+/*
+ * write.c
+ * Implementation of a stringifier and formatter for tomlc17-parsed TOML files.
+ */
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>

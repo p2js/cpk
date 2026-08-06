@@ -1,3 +1,7 @@
+/*
+ * rmdir_recursive.c
+ * Implementation of "rm -r".
+ */
 #ifndef _CPK_RMDIR_H
 #define _CPK_RMDIR_H
 

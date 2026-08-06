@@ -1,3 +1,7 @@
+/*
+ * color.h
+ * Functions and macro definitions for terminal-aware color formatting.
+ */
 #include <stdbool.h>
 
 bool use_colors;

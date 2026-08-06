@@ -1,3 +1,7 @@
+/*
+ * config.c
+ * Functions for parsing and outputing cpk.toml.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 

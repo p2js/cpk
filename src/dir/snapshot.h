@@ -2,7 +2,6 @@
  * snapshot.h
  * Utilities for creating and diffing recursive snapshots of directories.
  */
-
 #ifndef _CPK_SNAPSHOT_H
 #define _CPK_SNAPSHOT_H
 

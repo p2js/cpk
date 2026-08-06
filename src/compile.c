@@ -10,6 +10,9 @@
 #include "fmt/color.h"
 #include "tomlc17/src/tomlc17.h"
 
+/**
+ * Runs the build commands for a target in cpk.toml
+ */
 int compile_target(char* target, toml_result_t config) {
     // Check that the config defines the given target
 
@@ -132,6 +135,12 @@ int compile_target(char* target, toml_result_t config) {
     return 0;
 }
 
+/**
+ * Runs the executable defined for a target in cpk.toml
+ *
+ * This function assumes compile_target already ran, so target-dir/target/
+ * is guaranteed to exist and be valid in cpk.toml
+ */
 int run_target(char* target, toml_result_t config, char* argv[]) {
     // This runs after compile_target, so we are guaranteed that target-dir/target/ exists
     // and that both are validly defined in the toml

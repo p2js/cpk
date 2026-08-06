@@ -1,3 +1,7 @@
+/*
+ * rmdir_recursive.c
+ * Implementation of "rm -r".
+ */
 #include "rmdir_recursive.h"
 
 #include <dirent.h>

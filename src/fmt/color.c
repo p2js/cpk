@@ -1,3 +1,7 @@
+/*
+ * color.c
+ * Functions for terminal-aware color formatting.
+ */
 #include "color.h"
 
 #include <stdarg.h>
