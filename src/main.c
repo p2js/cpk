@@ -62,10 +62,11 @@ int main(int argc, char* argv[]) {
         return store_update_dependency(&ident);
     }
     // The next options all require parsing configuration
-    toml_result_t config = config_parse();
+    toml_result_t config;
     int exit_code = -1;
     // cpk compile target*
     if (!strcmp("compile", argv[1])) {
+        config = config_parse();
         char* default_target[] = {"dev", NULL};
         char** targets = argc >= 3 ? argv + 2 : default_target;
         for (int i = 0; targets[i] != NULL; i++) {
@@ -77,6 +78,7 @@ int main(int argc, char* argv[]) {
     }
     // cpk run [target]
     if (!strcmp("run", argv[1])) {
+        config = config_parse();
         char* target = "dev";
         char** run_argv = &argv[argc - 1];
         if (argc > 2) {
@@ -89,17 +91,20 @@ int main(int argc, char* argv[]) {
     }
     // cpk install
     if (!strcmp("install", argv[1])) {
+        config = config_parse();
         store_init();
         exit_code = install_dependencies(config);
     }
     // cpk add (name=dep)+
     if (!strcmp("add", argv[1])) {
+        config = config_parse();
         store_init();
         exit_code = add_dependencies(argv + 2, config);
         exit_code = config_write_out(config) | exit_code;
     }
     // cpk remove (name)
     if (!strcmp("remove", argv[1])) {
+        config = config_parse();
         if (argc < 3) {
             print_err(false, "no dependency name was specified");
             exit_code = 1;
@@ -110,6 +115,7 @@ int main(int argc, char* argv[]) {
     }
     // cpk targets
     if (!strcmp("targets", argv[1])) {
+        config = config_parse();
         exit_code = list_targets(config);
     }
 
@@ -117,8 +123,8 @@ int main(int argc, char* argv[]) {
         print_err(false, "unknown command '%s'\n      to view a list of commands, use 'cpk help'",
                   argv[1]);
         exit_code = 1;
+    } else {
+        config_free(config);
     }
-
-    config_free(config);
     return exit_code;
 }
