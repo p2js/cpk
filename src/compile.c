@@ -8,6 +8,7 @@
 
 #include "dir/snapshot.h"
 #include "fmt/color.h"
+#include "shell/shell.h"
 #include "tomlc17/src/tomlc17.h"
 
 /**
@@ -15,7 +16,6 @@
  */
 int compile_target(char* target, toml_result_t config) {
     // Check that the config defines the given target
-
     char target_table_name[4096];
     snprintf(target_table_name, 4096, "target.%s", target);
 
@@ -25,7 +25,7 @@ int compile_target(char* target, toml_result_t config) {
         return 1;
     }
 
-    // Grab the target dir name, use current dire
+    // Grab the target dir name, or use current dir
     toml_datum_t toml_target_dir = toml_get(config.toptab, "target-dir");
     if (toml_target_dir.type != TOML_STRING) {
         print_info("cpk.toml: target-dir not defined, using current directory");
@@ -97,17 +97,28 @@ int compile_target(char* target, toml_result_t config) {
             : (toml_datum_t){.type = TOML_ARRAY, .u.arr = {.size = 1, .elem = &toml_target_build}};
 
     // Run build command(s)
+    Shell shell;
+    if (shell_init(&shell) != 0) {
+        print_err(false, "failed to start shell for build commands");
+        snapshot_free(&before);
+        free(new_cflags);
+        return 1;
+    }
+
     for (int32_t i = 0; i < build_commands.u.arr.size; i++) {
         toml_datum_t command_datum = build_commands.u.arr.elem[i];
         const char* build_command = command_datum.u.str.ptr;
         printf("> %s\n", build_command);
-        int build_result = system(build_command);
-        if (build_result) {
-            print_err(false, "build command returned non-zero exit code");
-            snapshot_free(&before);
-            free(new_cflags);
-            return build_result;
-        }
+        int command_result = shell_exec(&shell, build_command);
+        if (command_result) break;
+    }
+
+    int build_result = shell_kill(&shell);
+    if (build_result) {
+        print_err(false, "build command returned non-zero exit code");
+        snapshot_free(&before);
+        free(new_cflags);
+        return build_result;
     }
 
     // Capture and diff directory after build, move any new files to target

@@ -13,6 +13,7 @@
 #include "dir/snapshot.c"
 #include "fmt/color.c"
 #include "fmt/color.h"
+#include "shell/shell.c"
 #include "store/store.c"
 #include "store/store.h"
 #include "toml/config.c"
