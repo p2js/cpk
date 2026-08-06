@@ -22,7 +22,7 @@ cpk can be used for two different purposes: as a dependency manager and simple b
 
 For detailed documentation see:
 - [Getting started with cpk](docs/getting-started.md) for an introduction to the directory structure and configuration file, with examples
-- [cpk as a dependency manager](docs/dependency-management.md) and [cpk as a build system](docs/building-and-running.md) for more detailed information on the primary use cases
+- [cpk as a dependency manager](docs/dependency-management.md) and [cpk as a build system](docs/building-projects.md) for more detailed information on the primary use cases
 
 Alternatively, you can take this repository as an example of usage, since it uses itself for dependency and build management.
 
