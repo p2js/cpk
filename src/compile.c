@@ -89,7 +89,7 @@ int compile_target(char* target, toml_result_t config) {
     for (int32_t i = 0; i < build_commands.u.arr.size; i++) {
         toml_datum_t command_datum = build_commands.u.arr.elem[i];
         const char* build_command = command_datum.u.str.ptr;
-        printf("> %s\n", build_command);
+        printf(COLOR_GRAY("> %s\n"), build_command);
         int command_result = shell_exec(&shell, build_command);
         if (command_result) break;
     }
@@ -167,9 +167,9 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
     }
 
     argv[0] = executable_path;
-    putchar('>');
+    printf(COLOR_GRAY(">"));
     for (size_t i = 0; argv[i] != NULL; i++) {
-        printf(" %s", argv[i]);
+        printf(COLOR_GRAY(" %s"), argv[i]);
     }
     putchar('\n');
 
