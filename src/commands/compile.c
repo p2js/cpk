@@ -160,8 +160,12 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
     const char* executable_name = target_ex.u.str.ptr;
     toml_datum_t toml_target_dir = toml_get(config.toptab, "target-dir");
     if (toml_target_dir.type == TOML_STRING) {
-        snprintf(executable_path, 4096, "%s/%s/%s", toml_target_dir.u.str.ptr, target,
-                 executable_name);
+        if (executable_name[0] == '/') {
+            snprintf(executable_path, 4096, "%s", executable_name);
+        } else {
+            snprintf(executable_path, 4096, "%s/%s/%s", toml_target_dir.u.str.ptr, target,
+                     executable_name);
+        }
     } else {
         strcpy(executable_path, executable_name);
     }
@@ -174,5 +178,8 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
     putchar('\n');
 
     int exit_code = execv(executable_path, argv);
+    // -1 is the bash code for unknown command, but
+    // cpk treats -1 as exit code unset
+    if (exit_code == -1) exit_code = 1;
     return exit_code;
 }
