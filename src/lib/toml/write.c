@@ -19,7 +19,7 @@ typedef struct {
 
 static int sbuf_reserve(StringBuffer* buffer, size_t add) {
     size_t need = buffer->len + add + 1;
-    if (need <= buffer->cap) return 1;
+    if (need <= buffer->cap) return 0;
     size_t new_cap = buffer->cap ? buffer->cap : 256;
     while (new_cap < need) new_cap *= 2;
     char* p = (char*)realloc(buffer->buf, new_cap);
@@ -271,7 +271,6 @@ static int emit_table_body(
         if (v->type == TOML_UNKNOWN || v->type == TOML_TABLE) continue;
 
         has_values = true;
-
         if (emit_key(buffer, table->u.tab.key[i], table->u.tab.len[i])) return 1;
         if (sbuf_puts(buffer, " = ")) return 1;
         if (emit_value(buffer, v, 0)) return 1;
@@ -312,7 +311,9 @@ static int table_has_values(const toml_datum_t* table) {
 
 static int emit_table_recursive(
     StringBuffer* buffer, const toml_datum_t* table, const char** path, int* path_len, int depth) {
-    if (depth > 0 && table_has_values(table)) {
+    bool is_dependencies_table = (depth == 1 && path[0] && strcmp(path[0], "dependencies") == 0);
+
+    if (depth > 0 && (table_has_values(table) || is_dependencies_table)) {
         if (sbuf_putc(buffer, '[')) return 1;
         if (emit_path(buffer, path, path_len, depth)) return 1;
         if (sbuf_puts(buffer, "]\n")) return 1;
