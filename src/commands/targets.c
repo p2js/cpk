@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "fmt/color.h"
+#include "../lib/fmt/color.h"
 #include "tomlc17/src/tomlc17.h"
 
 int list_targets(toml_result_t config) {

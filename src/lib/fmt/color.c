@@ -15,12 +15,12 @@ void set_use_colors() {
     use_colors = getenv("NO_COLOR") ? false : isatty(1);
 }
 
-void print_err(bool use_perror, const char* fmt, ...) {
-    va_list ap;
+void print_err(bool use_perror, const char* format_string, ...) {
+    va_list arg_list;
     fprintf(stderr, use_colors ? COLOR_BOLD(COLOR_REDBRIGHT("error")) " " : "ERROR: ");
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
+    va_start(arg_list, format_string);
+    vfprintf(stderr, format_string, arg_list);
+    va_end(arg_list);
 
     if (use_perror) {
         fputs(": ", stderr);
@@ -30,20 +30,20 @@ void print_err(bool use_perror, const char* fmt, ...) {
     }
 }
 
-void print_warn(const char* fmt, ...) {
-    va_list ap;
+void print_warn(const char* format_string, ...) {
+    va_list arg_list;
     fprintf(stderr, use_colors ? COLOR_BOLD(COLOR_YELLOW("warning")) " " : "WARNING: ");
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
+    va_start(arg_list, format_string);
+    vfprintf(stderr, format_string, arg_list);
+    va_end(arg_list);
     fputc('\n', stderr);
 }
 
-void print_info(const char* fmt, ...) {
-    va_list ap;
+void print_info(const char* format_string, ...) {
+    va_list arg_list;
     fprintf(stderr, use_colors ? COLOR_BOLD(COLOR_BLUEBRIGHT("info")) " " : "INFO: ");
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
+    va_start(arg_list, format_string);
+    vfprintf(stderr, format_string, arg_list);
+    va_end(arg_list);
     fputc('\n', stderr);
 }

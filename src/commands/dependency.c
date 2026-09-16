@@ -5,9 +5,9 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "dir/rmdir_recursive.h"
-#include "fmt/color.h"
-#include "store/store.h"
+#include "../lib/dir/rmdir_recursive.h"
+#include "../lib/fmt/color.h"
+#include "../lib/store/store.h"
 #include "tomlc17/src/tomlc17.h"
 
 /**

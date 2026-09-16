@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "fmt/color.h"
+#include "../lib/fmt/color.h"
 
 const char* INIT_DEFAULT_GITIGNORE =
     "\n#cpk output directory\n"

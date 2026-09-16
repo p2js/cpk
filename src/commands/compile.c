@@ -6,9 +6,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "dir/snapshot.h"
-#include "fmt/color.h"
-#include "shell/shell.h"
+#include "../lib/dir/snapshot.h"
+#include "../lib/fmt/color.h"
+#include "../lib/shell/shell.h"
 #include "tomlc17/src/tomlc17.h"
 
 /**

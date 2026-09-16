@@ -89,9 +89,9 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
     if (!strncmp("git:", ident_string, 4)) {
         ident.mode = DEPENDENCY_GIT;
         // Determine potential git path at end then cut off string
-        size_t a = strlen(ident_string);
+        size_t ident_length = strlen(ident_string);
         int i;
-        for (i = 2; i < a; i++) {
+        for (i = 2; i < ident_length; i++) {
             if (ident_string[i] == ':' && ident_string[i + 1] == ':') {
                 strcpy(ident.git_path, ident_string + i + 2);
                 break;

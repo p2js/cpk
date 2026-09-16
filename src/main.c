@@ -9,21 +9,21 @@
 #define XXH_IMPLEMENTATION
 #include "xxHash/xxhash.h"
 // Internal dependencies
-#include "dir/rmdir_recursive.c"
-#include "dir/snapshot.c"
-#include "fmt/color.c"
-#include "fmt/color.h"
-#include "shell/shell.c"
-#include "store/store.c"
-#include "store/store.h"
-#include "toml/config.c"
-#include "toml/write.c"
+#include "lib/dir/rmdir_recursive.c"
+#include "lib/dir/snapshot.c"
+#include "lib/fmt/color.c"
+#include "lib/fmt/color.h"
+#include "lib/shell/shell.c"
+#include "lib/store/store.c"
+#include "lib/store/store.h"
+#include "lib/toml/config.c"
+#include "lib/toml/write.c"
 // Command implementations
-#include "compile.c"
-#include "dependency.c"
-#include "help.c"
-#include "init.c"
-#include "targets.c"
+#include "commands/compile.c"
+#include "commands/dependency.c"
+#include "commands/help.c"
+#include "commands/init.c"
+#include "commands/targets.c"
 
 int main(int argc, char* argv[]) {
     set_use_colors();

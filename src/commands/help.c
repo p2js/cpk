@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "fmt/color.h"
+#include "../lib/fmt/color.h"
 
 typedef enum {
     INIT,

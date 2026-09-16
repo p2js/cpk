@@ -10,9 +10,9 @@
 bool use_colors;
 void set_use_colors();
 
-void print_err(bool use_perror, const char* fmt, ...);
-void print_warn(const char* fmt, ...);
-void print_info(const char* fmt, ...);
+void print_err(bool use_perror, const char* format_string, ...);
+void print_warn(const char* format_string, ...);
+void print_info(const char* format_string, ...);
 
 #define __DEFINE_COLOR__(code, message, reset) "\x1b[" #code "m" message "\x1b[" #reset "m"
 

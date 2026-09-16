@@ -58,16 +58,16 @@ int shell_init(Shell* sh) {
     return 0;
 }
 
-static int read_line_fd(int fd, char* buf, size_t cap) {
+static int read_line_fd(int fd, char* buffer, size_t capacity) {
     size_t i = 0;
-    while (i + 1 < cap) {
+    while (i + 1 < capacity) {
         char c;
         ssize_t n = read(fd, &c, 1);
         if (n <= 0) break;
-        buf[i++] = c;
+        buffer[i++] = c;
         if (c == '\n') break;
     }
-    buf[i] = '\0';
+    buffer[i] = '\0';
     return (i > 0) ? 0 : -1;
 }
 
