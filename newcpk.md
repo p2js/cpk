@@ -7,24 +7,52 @@
 - DONE accept multiple targets for cpk compile
 - DONE add cpk targets command that will print all targets space separated (this and above for building all as "cpk targets | xargs cpk compile")
 - DONE Introduce arrays to build for multiple commands (stop on any nonzero exit code)
+- DONE change `cpk run` to not add build dir to absolute paths
+- DONE `target.x.copy` to specify files to copy over to the build folder
 
 TODO:
 
-- colored help menu (see cargo)
-- Use custom wget: 
-- Add header comments
 - Documentation
-- bootstrap script
-- aarch64
+   - add examples for toml
 - efficient git dependencies
+- docker and target triple definitions in cpk.toml
 
-## DOCUMENTATION CHANGES
+```toml
+[target.release-aarch64-static-musl]
+arch = "aarch64"
+dockerfile = "dockerfiles/aarch64-static-musl.Dockerfile"
+build = "..."
+exec = "cpk"
+```
+cpk compile will check your arch for you and use dockerfile if they don't match
 
-- Add example tomls
-- change git: to say path rather than URL
+to get uname (arch is buffer.machine, x86_64):
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/utsname.h>
 
-After installing dependencies, you can simply include their source files as necessary in your code. 
+int main(void) {
 
-In C, this would look like `#include "dep/file.c"`. To reference dependencies directly like this, you can pass the `-I.cpk` flag to your build command which will add the dependency directory to the compiler's search path. `cpk` will also inject that flag into the `$CFLAGS` environment variable when compiling or running a target.
+   struct utsname buffer;
 
-> Tip: Use `cpk targets | xargs cpk compile` to compile all targets at once.
+   errno = 0;
+   if (uname(&buffer) < 0) {
+      perror("uname");
+      exit(EXIT_FAILURE);
+   }
+
+   printf("system name = %s\n", buffer.sysname);
+   printf("node name   = %s\n", buffer.nodename);
+   printf("release     = %s\n", buffer.release);
+   printf("version     = %s\n", buffer.version);
+   printf("machine     = %s\n", buffer.machine);
+
+   #ifdef _GNU_SOURCE
+      printf("domain name = %s\n", buffer.domainname);
+   #endif
+
+   return EXIT_SUCCESS;
+}
+```
