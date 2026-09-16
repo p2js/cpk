@@ -1,4 +1,4 @@
-/**
+/*
  * env.h
  *
  * Function to read environment variables for alternative commands from

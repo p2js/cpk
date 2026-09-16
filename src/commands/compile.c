@@ -1,12 +1,14 @@
 #include <errno.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../lib/dir/snapshot.h"
+#include "../lib/file/copy.h"
+#include "../lib/file/snapshot.h"
 #include "../lib/fmt/color.h"
 #include "../lib/shell/shell.h"
 #include "tomlc17/src/tomlc17.h"
@@ -41,17 +43,34 @@ int compile_target(char* target, toml_result_t config) {
         return 1;
     }
 
-    // Compile code using the build script
+    // Validate the build script(s)
     toml_datum_t toml_target_build = toml_get(toml_target, "build");
     if (toml_target_build.type != TOML_STRING && toml_target_build.type != TOML_ARRAY) {
         print_err(false, "cpk.toml: target %s does not provide one or more build commands", target);
         return 1;
     }
-    // If given an array of commands, validate that each one is a string
+
     if (toml_target_build.type == TOML_ARRAY) {
         for (int32_t i = 0; i < toml_target_build.u.arr.size; i++) {
             if (toml_target_build.u.arr.elem[i].type != TOML_STRING) {
                 print_err(false, "cpk.toml: build command %d of target %s is not a string", i + 1,
+                          target);
+                return 1;
+            }
+        }
+    }
+
+    // Validate the copy list if given
+    toml_datum_t toml_target_copy = toml_get(toml_target, "copy");
+    if (toml_target_copy.type != TOML_UNKNOWN && toml_target_copy.type != TOML_ARRAY &&
+        toml_target_copy.type != TOML_STRING) {
+        print_err(false, "cpk.toml: target %s defines invalid file path(s) for copying", target);
+        return 1;
+    }
+    if (toml_target_copy.type == TOML_ARRAY) {
+        for (int32_t i = 0; i < toml_target_copy.u.arr.size; i++) {
+            if (toml_target_copy.u.arr.elem[i].type != TOML_STRING) {
+                print_err(false, "cpk.toml: copy file path %d of target %s is not a string", i + 1,
                           target);
                 return 1;
             }
@@ -127,6 +146,34 @@ int compile_target(char* target, toml_result_t config) {
         snapshot_free(&before);
         snapshot_free(&after);
         snapshot_free(&diff);
+
+        // copy files from target.copy
+        if (toml_target_copy.type != TOML_UNKNOWN) {
+            toml_datum_t copy_paths =
+                toml_target_copy.type == TOML_ARRAY
+                    ? toml_target_copy
+                    : (toml_datum_t){.type = TOML_ARRAY,
+                                     .u.arr = {.size = 1, .elem = &toml_target_copy}};
+
+            for (int i = 0; i < copy_paths.u.arr.size; i++) {
+                toml_datum_t element = copy_paths.u.arr.elem[i];
+                const char* src_path = element.u.str.ptr;
+                if (strlen(dirpath) + strlen(src_path) + 1 > 4096) {
+                    // path too long
+                    print_err(false, "");
+                }
+
+                char dst_path[4096];
+                snprintf(dst_path, 4096, "%s/%s", dirpath, element.u.str.ptr);
+
+                printf("Copying file %s\n", element.u.str.ptr);
+
+                if (copy_file(src_path, dst_path)) {
+                    free(new_cflags);
+                    return 1;
+                }
+            }
+        }
     }
 
     // reset CFLAGS

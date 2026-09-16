@@ -12,8 +12,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../dir/rmdir_recursive.h"
-#include "../dir/snapshot.h"
+#include "../file/rmdir_recursive.h"
+#include "../file/snapshot.h"
 #include "../fmt/color.h"
 #include "../shell/env.h"
 #include "miniz/miniz.h"

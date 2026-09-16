@@ -10,8 +10,9 @@
 #define XXH_IMPLEMENTATION
 #include "xxHash/xxhash.h"
 // Internal dependencies
-#include "lib/dir/rmdir_recursive.c"
-#include "lib/dir/snapshot.c"
+#include "lib/file/copy.c"
+#include "lib/file/rmdir_recursive.c"
+#include "lib/file/snapshot.c"
 #include "lib/fmt/color.c"
 #include "lib/fmt/color.h"
 #include "lib/shell/env.c"
