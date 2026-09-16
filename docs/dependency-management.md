@@ -18,8 +18,12 @@ There are 5 types of dependencies, each handled differently:
 - `zip:<URL>` represents a `.zip` archive hosted at `URL`.
 - `file:<path>` represents a local directory or file. These dependencies will be linked directly rather than copied to the global dependency store.
 
-> `git:` dependencies will require that cpk have access to the `git` shell command.
-> `web:` and `zip:` dependencies will require that cpk have access to the `curl` shell command.
+`git:` dependencies will require that cpk have access to the `git` shell command.
+
+`web:` and `zip:` dependencies will require that cpk have access to the `curl` shell command.
+
+> These commands can be overridden by setting the `CPK_GIT_COMMAND` and `CPK_CURL_COMMAND` environment variables respectively,
+> either in a `.env` file in the project root or in the current shell environment.
 
 #### Referencing dependencies
 

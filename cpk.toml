@@ -4,6 +4,7 @@ target-dir = "build"
 miniz = "zip:https://github.com/richgel999/miniz/releases/download/3.1.0/miniz-3.1.0.zip"
 tomlc17 = "git:https://github.com/cktan/tomlc17.git::75565ea37f70c2c9b0013321aede947c10f91d5b"
 xxHash = "git:https://github.com/Cyan4973/xxHash.git::c0b5ea995d66691734b1a79ad89e73a0d2fd5a53"
+dotenv-c = "git:https://github.com/Isty001/dotenv-c.git::5ef99c993e0b4520c7c7cc8471d3d8dc8a66a02d"
 
 [target.dev]
 build = "clang src/main.c -I.cpk -o cpk"

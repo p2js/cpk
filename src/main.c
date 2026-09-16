@@ -2,6 +2,7 @@
 #include <string.h>
 
 // External dependencies
+#include "dotenv-c/src/dotenv.c"
 #include "miniz/miniz.c"
 #include "tomlc17/src/tomlc17.c"
 #include "tomlc17/src/tomlc17.h"
@@ -13,6 +14,8 @@
 #include "lib/dir/snapshot.c"
 #include "lib/fmt/color.c"
 #include "lib/fmt/color.h"
+#include "lib/shell/env.c"
+#include "lib/shell/env.h"
 #include "lib/shell/shell.c"
 #include "lib/store/store.c"
 #include "lib/store/store.h"
@@ -93,12 +96,14 @@ int main(int argc, char* argv[]) {
     // cpk install
     if (!strcmp("install", argv[1])) {
         config = config_parse();
+        env_read();
         store_init();
         exit_code = install_dependencies(config);
     }
     // cpk add (name=dep)+
     if (!strcmp("add", argv[1])) {
         config = config_parse();
+        env_read();
         store_init();
         exit_code = add_dependencies(argv + 2, config);
         exit_code = config_write_out(config) | exit_code;

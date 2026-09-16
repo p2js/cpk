@@ -15,6 +15,7 @@
 #include "../dir/rmdir_recursive.h"
 #include "../dir/snapshot.h"
 #include "../fmt/color.h"
+#include "../shell/env.h"
 #include "miniz/miniz.h"
 #include "xxHash/xxhash.h"
 
@@ -129,9 +130,10 @@ store_dependency_identifier store_resolve_identifier(const char* ident_string) {
 
 int store_curl_dependency(store_dependency_identifier dependency) {
     // No chdir here, curl will download directly to dependency.path
-    char curl_command[2048 + 4096 + 20];  // URL + path + "curl -o " + " " + " -L"
-    snprintf(curl_command, sizeof(curl_command), "curl -o \"%s\" %s -L", dependency.path,
-             dependency.URL);
+    // path(env_curl_command) + URL + path + " -o \"" + "\" " + " -L"
+    char curl_command[4096 + 2048 + 4096 + 10];
+    snprintf(curl_command, sizeof(curl_command), "%s -o \"%s\" %s -L", env_curl_command,
+             dependency.path, dependency.URL);
     printf("Downloading %s to %s\n", dependency.URL, dependency.path);
     if (system(curl_command)) {
         print_err(false, "downloading dependency from %s failed", dependency.URL);
@@ -178,8 +180,9 @@ int store_get_dependency(store_dependency_identifier* dependency) {
                 return 1;
             }
             chdir(dependency->path);
-            char git_clone_command[2048 + 12];
-            snprintf(git_clone_command, sizeof(git_clone_command), "git clone %s .",
+            // path(env_git_command) + url + " clone " + " ."
+            char git_clone_command[4096 + 2048 + 9];
+            snprintf(git_clone_command, sizeof(git_clone_command), "%s clone %s .", env_git_command,
                      dependency->URL);
 
             if (system(git_clone_command)) {
@@ -187,9 +190,10 @@ int store_get_dependency(store_dependency_identifier* dependency) {
                 exit_code = 1;
             }
             if (dependency->git_path[0] != 0) {
-                char git_checkout_command[256 + 13];
-                snprintf(git_checkout_command, sizeof(git_checkout_command), "git checkout %s",
-                         dependency->git_path);
+                // path(env_git_command) + git_path + " checkout "
+                char git_checkout_command[4096 + 256 + 10];
+                snprintf(git_checkout_command, sizeof(git_checkout_command), "%s checkout %s",
+                         env_git_command, dependency->git_path);
 
                 if (system(git_checkout_command)) {
                     print_err(false, "checking out %s failed", dependency->git_path);
@@ -339,7 +343,10 @@ int store_update_dependency(store_dependency_identifier* dependency) {
                 print_err(true, "finding dependency directory failed");
                 return 1;
             }
-            if (system("git pull")) {
+            // path(env_git_command) + " pull"
+            char git_pull_command[4096 + 5];
+            snprintf(git_pull_command, sizeof(git_pull_command), "%s pull", env_git_command);
+            if (system(git_pull_command)) {
                 print_err(false, "updating dependency from %s failed", dependency->git_path);
                 return 1;
             }
