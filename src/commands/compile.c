@@ -14,6 +14,15 @@
 #include "tomlc17/src/tomlc17.h"
 
 /**
+ * Helper that normalises a string datum into an array,
+ * leaving other types (array, unknown) unaltered
+ */
+toml_datum_t normalise_datum_as_array(toml_datum_t datum) {
+    if (datum.type != TOML_STRING) return datum;
+    return (toml_datum_t){.type = TOML_ARRAY, .u.arr = {.size = 1, .elem = &datum}};
+}
+
+/**
  * Runs the build commands for a target in cpk.toml
  */
 int compile_target(char* target, toml_result_t config) {
@@ -91,11 +100,6 @@ int compile_target(char* target, toml_result_t config) {
     dir_snapshot before, after, diff;
     if (move) before = snapshot_directory(".");
 
-    toml_datum_t build_commands =
-        toml_target_build.type == TOML_ARRAY
-            ? toml_target_build
-            : (toml_datum_t){.type = TOML_ARRAY, .u.arr = {.size = 1, .elem = &toml_target_build}};
-
     // Run build command(s)
     Shell shell;
     if (shell_init(&shell) != 0) {
@@ -105,10 +109,12 @@ int compile_target(char* target, toml_result_t config) {
         return 1;
     }
 
+    toml_datum_t build_commands = normalise_datum_as_array(toml_target_build);
+
     for (int32_t i = 0; i < build_commands.u.arr.size; i++) {
         toml_datum_t command_datum = build_commands.u.arr.elem[i];
         const char* build_command = command_datum.u.str.ptr;
-        printf(COLOR_GRAY("> %s\n"), build_command);
+        printf(use_colors ? COLOR_GRAY("> %s\n") : "> %s\n", build_command);
         int command_result = shell_exec(&shell, build_command);
         if (command_result) break;
     }
@@ -146,34 +152,6 @@ int compile_target(char* target, toml_result_t config) {
         snapshot_free(&before);
         snapshot_free(&after);
         snapshot_free(&diff);
-
-        // copy files from target.copy
-        if (toml_target_copy.type != TOML_UNKNOWN) {
-            toml_datum_t copy_paths =
-                toml_target_copy.type == TOML_ARRAY
-                    ? toml_target_copy
-                    : (toml_datum_t){.type = TOML_ARRAY,
-                                     .u.arr = {.size = 1, .elem = &toml_target_copy}};
-
-            for (int i = 0; i < copy_paths.u.arr.size; i++) {
-                toml_datum_t element = copy_paths.u.arr.elem[i];
-                const char* src_path = element.u.str.ptr;
-                if (strlen(dirpath) + strlen(src_path) + 1 > 4096) {
-                    // path too long
-                    print_err(false, "");
-                }
-
-                char dst_path[4096];
-                snprintf(dst_path, 4096, "%s/%s", dirpath, element.u.str.ptr);
-
-                printf("Copying file %s\n", element.u.str.ptr);
-
-                if (copy_file(src_path, dst_path)) {
-                    free(new_cflags);
-                    return 1;
-                }
-            }
-        }
     }
 
     // reset CFLAGS
@@ -182,6 +160,26 @@ int compile_target(char* target, toml_result_t config) {
         setenv("CFLAGS", original_cflags, true);
     } else {
         unsetenv("CFLAGS");
+    }
+
+    toml_datum_t copy_paths = normalise_datum_as_array(toml_target_copy);
+    if (copy_paths.type != TOML_UNKNOWN) {
+        for (int i = 0; i < copy_paths.u.arr.size; i++) {
+            toml_datum_t element = copy_paths.u.arr.elem[i];
+            const char* src_path = element.u.str.ptr;
+            if (strlen(dirpath) + strlen(src_path) + 1 > 4096) {
+                // path too long
+                print_err(false, "Destination path for copying %s is too long", src_path);
+                continue;
+            }
+
+            char dst_path[4096];
+            snprintf(dst_path, 4096, "%s/%s", dirpath, element.u.str.ptr);
+
+            printf("Copying file %s\n", element.u.str.ptr);
+
+            if (copy_file(src_path, dst_path)) return 1;
+        }
     }
 
     return 0;
@@ -194,8 +192,6 @@ int compile_target(char* target, toml_result_t config) {
  * is guaranteed to exist and be valid in cpk.toml
  */
 int run_target(char* target, toml_result_t config, char* argv[]) {
-    // This runs after compile_target, so we are guaranteed that target-dir/target/ exists
-    // and that both are validly defined in the toml
     char executable_path[4096];
     snprintf(executable_path, 4096, "target.%s.exec", target);
 
@@ -218,9 +214,9 @@ int run_target(char* target, toml_result_t config, char* argv[]) {
     }
 
     argv[0] = executable_path;
-    printf(COLOR_GRAY(">"));
+    printf(use_colors ? COLOR_GRAY(">") : ">");
     for (size_t i = 0; argv[i] != NULL; i++) {
-        printf(COLOR_GRAY(" %s"), argv[i]);
+        printf(use_colors ? COLOR_GRAY(" %s") : " %s", argv[i]);
     }
     putchar('\n');
 
