@@ -2,15 +2,6 @@
 
 #include "../lib/fmt/color.h"
 
-typedef enum {
-    INIT,
-    HELP,
-    COMPILE,
-    RUN,
-    INSTALL,
-    ADD
-} HelpCommand;
-
 const char* HELP_MENU_PLAIN =
     "cpk: Simple dependency manager and project runner for C\n"
     "\n"
@@ -65,12 +56,6 @@ const char* HELP_MENU_COLORED =
     "\tzip:<URL>\t\t.zip archive hosted at URL       "COLOR_GRAY("(requires curl command)")"\n"
     "\tfile:<path>\t\tLocal file/directory";
 
-void help_show(HelpCommand cmd) {
-    switch (cmd) {
-        case HELP:
-            printf("%s\n", use_colors ? HELP_MENU_COLORED : HELP_MENU_PLAIN);
-            break;
-        default:
-            break;
-    }
+void help_show() {
+    printf("%s\n", use_colors ? HELP_MENU_COLORED : HELP_MENU_PLAIN);
 }
